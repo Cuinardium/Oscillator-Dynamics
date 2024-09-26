@@ -9,6 +9,8 @@ public class Configuration {
     private final double dt;
     private final double dt2;
 
+    private final String integrator;
+
     private final String outputDir;
 
     private Configuration(Builder builder) {
@@ -19,6 +21,8 @@ public class Configuration {
         this.r0 = builder.r0;
         this.dt = builder.dt;
         this.dt2 = builder.dt2;
+
+        this.integrator = builder.integrator;
         
         this.outputDir = builder.outputDir;
     }
@@ -51,6 +55,10 @@ public class Configuration {
         return dt2;
     }
 
+    public String getIntegrator() {
+        return integrator;
+    }
+
     public String getOutputDir() {
         return outputDir;
     }
@@ -63,6 +71,8 @@ public class Configuration {
         private double r0;
         private double dt;
         private double dt2;
+
+        private String integrator;
 
         private String outputDir;
 
@@ -98,6 +108,11 @@ public class Configuration {
 
         public Builder setDt2(double dt2) {
             this.dt2 = dt2;
+            return this;
+        }
+
+        public Builder setIntegrator(String integrator) {
+            this.integrator = integrator;
             return this;
         }
 

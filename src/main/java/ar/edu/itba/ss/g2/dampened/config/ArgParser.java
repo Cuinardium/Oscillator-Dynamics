@@ -21,6 +21,11 @@ public class ArgParser {
                     new Option("r0", "position", true, "Initial position (m)"),
                     new Option("dt", "delta", true, "Integration time step (s)"),
                     new Option("dt2", "delta2", true, "Snapshot time step (s)"),
+                    new Option(
+                            "i",
+                            "integrator",
+                            true,
+                            "Movement integration scheme (beeman | verlet | gear)"),
                     new Option("out", "output", true, "Output directory"),
                     new Option("h", "help", false, "Print help"));
 
@@ -124,6 +129,17 @@ public class ArgParser {
                 return null;
             }
 
+            String integrator = cmd.getOptionValue("i").strip();
+            List<String> integrators = List.of("beeman", "verlet", "gear");
+            if (!integrators.contains(integrator)) {
+                System.out.println(
+                        "Error: Invalid integrator. Expected one of: "
+                                + integrators.stream().reduce((a, b) -> a + ", " + b).orElse(""));
+                return null;
+            }
+
+            builder.setIntegrator(integrator);
+
             builder.setOutputDir(cmd.getOptionValue("out"));
 
             // Build and return the configuration object
@@ -145,8 +161,7 @@ public class ArgParser {
         formatter.setWidth(120);
 
         String commandLineSyntax =
-                "java -jar dampened-oscillator-jar-with-dependencies.jar"
-                        + " [options]";
+                "java -jar dampened-oscillator-jar-with-dependencies.jar" + " [options]";
 
         formatter.printHelp(commandLineSyntax, options);
     }

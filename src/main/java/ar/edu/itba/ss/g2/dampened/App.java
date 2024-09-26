@@ -4,6 +4,7 @@ import ar.edu.itba.ss.g2.dampened.config.ArgParser;
 import ar.edu.itba.ss.g2.dampened.config.Configuration;
 import ar.edu.itba.ss.g2.model.Particle;
 import ar.edu.itba.ss.g2.simulation.Simulation;
+import ar.edu.itba.ss.g2.simulation.integrators.BeemanIntegrator;
 import ar.edu.itba.ss.g2.simulation.integrators.Equation;
 import ar.edu.itba.ss.g2.simulation.integrators.MovementIntegrator;
 import ar.edu.itba.ss.g2.simulation.integrators.VerletIntegrator;
@@ -41,7 +42,20 @@ public class App {
         double dt2 = configuration.getDt2();
         double tf = configuration.getTf();
 
-        MovementIntegrator integrator = new VerletIntegrator(List.of(particle), forceEquation, dt);
+        MovementIntegrator integrator;
+
+        switch (configuration.getIntegrator()) {
+            case "verlet":
+                integrator = new VerletIntegrator(List.of(particle), forceEquation, dt);
+                break;
+            case "beeman":
+                integrator = new BeemanIntegrator(List.of(particle), forceEquation, dt);
+                break;
+            default:
+                System.err.println("Invalid integrator: " + configuration.getIntegrator());
+                System.exit(1);
+                return;
+        }
 
         Simulation simulation = new Simulation(dt, dt2, integrator);
         simulation.run(tf);

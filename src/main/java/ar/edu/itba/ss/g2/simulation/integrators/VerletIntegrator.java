@@ -14,8 +14,7 @@ public class VerletIntegrator implements MovementIntegrator {
 
     private final Equation forceEquation;
 
-    public VerletIntegrator(
-            List<Particle> particles, Equation forceEquation, double deltaTime) {
+    public VerletIntegrator(List<Particle> particles, Equation forceEquation, double deltaTime) {
         this.deltaTime = deltaTime;
         this.particles = new ArrayList<>(particles);
         this.previousParticles = new ArrayList<>(particles.size());
@@ -32,7 +31,12 @@ public class VerletIntegrator implements MovementIntegrator {
             double previousVelocity =
                     particle.getV() - (deltaTime / particle.getMass()) * forces.get(i);
 
-            previousParticles.add(new Particle(particle.getId(), previousPosition, previousVelocity, particle.getMass()));
+            previousParticles.add(
+                    new Particle(
+                            particle.getId(),
+                            previousPosition,
+                            previousVelocity,
+                            particle.getMass()));
         }
 
         this.forceEquation = forceEquation;

@@ -34,6 +34,7 @@ public class FileUtil {
             writer.write(configuration.getDt() + "\n");
             writer.write(configuration.getDt2() + "\n");
             writer.write(configuration.getTf() + "\n");
+            writer.write(configuration.getIntegrator() + "\n");
         }
     }
 
