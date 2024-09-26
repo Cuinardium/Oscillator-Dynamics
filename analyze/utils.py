@@ -41,6 +41,7 @@ def parse_static_file_dampened(path="static.txt"):
     Dt = float(lines[4].strip())
     Dt2 = float(lines[5].strip())
     Tf = float(lines[6].strip())
+    Integrator = lines[7].strip()
 
     return {
         "M": M,
@@ -49,5 +50,6 @@ def parse_static_file_dampened(path="static.txt"):
         "R0": R0,
         "Dt": Dt,
         "Dt2": Dt2,
-        "Tf": Tf
+        "Tf": Tf,
+        "Integrator": Integrator,
     }

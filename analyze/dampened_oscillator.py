@@ -16,16 +16,16 @@ def get_analitic_positions(time_steps, gamma, m, k, A):
 
 
 # Set up the figure and axis for the plot
-def plot_positions_through_time(time_steps, verlet_positions, analitic_positions, file_name="positions_vs_time.png"):
+def plot_positions_through_time(time_steps, positions, analitic_positions, integrator, file_name="positions_vs_time.png"):
     plt.figure(figsize=(10, 6))
     plt.plot(
         time_steps,
-        verlet_positions,
+        positions,
         color="b",
         marker="o",
         linestyle="-",
         markersize=1,
-        label="Verlet",
+        label=integrator,
     )
     plt.plot(
         time_steps,
@@ -38,14 +38,14 @@ def plot_positions_through_time(time_steps, verlet_positions, analitic_positions
     )
     plt.xlim(min(time_steps), max(time_steps))
 
-    verlet_min = min(verlet_positions)
-    verlet_max = max(verlet_positions)
+    sim_min = min(positions)
+    sim_max = max(positions)
     analitic_min = min(analitic_positions)
     analitic_max = max(analitic_positions)
 
     plt.ylim(
-        min(verlet_min, analitic_min) - 0.1,
-        max(verlet_max, analitic_max) + 0.1,
+        min(sim_min, analitic_min) - 0.1,
+        max(sim_max, analitic_max) + 0.1,
     )
 
     plt.xlabel("Tiempo (s)")
@@ -72,9 +72,10 @@ if __name__ == "__main__":
     k = static_data["K"]
     m = static_data["M"]
     A = static_data["R0"]
+    integrator = static_data["Integrator"]
 
     analitic_positions = get_analitic_positions(time, gamma, m, k, A)
 
-    plot_positions_through_time(time, positions[:, 0], analitic_positions, f"{directory}/positions_vs_time.png")
+    plot_positions_through_time(time, positions[:, 0], analitic_positions, integrator, f"{directory}/positions_vs_time.png")
 
 
