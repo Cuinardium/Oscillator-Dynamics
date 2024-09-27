@@ -63,6 +63,7 @@ public class ArgParser {
                     || !cmd.hasOption("r0")
                     || !cmd.hasOption("dt")
                     || !cmd.hasOption("dt2")
+                    || !cmd.hasOption("i")
                     || !cmd.hasOption("out")) {
                 System.out.println("Error: Missing parameters. All parameters are required.");
                 return null;
