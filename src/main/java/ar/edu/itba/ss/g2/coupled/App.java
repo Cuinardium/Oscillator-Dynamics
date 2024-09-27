@@ -6,6 +6,7 @@ import ar.edu.itba.ss.g2.model.Particle;
 import ar.edu.itba.ss.g2.simulation.Simulation;
 import ar.edu.itba.ss.g2.simulation.integrators.BeemanIntegrator;
 import ar.edu.itba.ss.g2.simulation.integrators.Equation;
+import ar.edu.itba.ss.g2.simulation.integrators.GearIntegrator;
 import ar.edu.itba.ss.g2.simulation.integrators.MovementIntegrator;
 import ar.edu.itba.ss.g2.simulation.integrators.VerletIntegrator;
 import ar.edu.itba.ss.g2.utils.FileUtil;
@@ -69,6 +70,9 @@ public class App {
                 break;
             case "beeman":
                 integrator = new BeemanIntegrator(particleList, forceEquation, dt);
+                break;
+            case "gear":
+                integrator = new GearIntegrator(particleList, forceEquation, dt);
                 break;
             default:
                 System.err.println("Invalid integrator: " + configuration.getIntegrator());
