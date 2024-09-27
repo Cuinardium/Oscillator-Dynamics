@@ -39,7 +39,7 @@ public class App {
         Particle particle = new Particle(0, r0, r1, r2, r3, r4, r5, m);
 
         Equation forceEquation =
-                (particles) ->
+                (particles, t) ->
                         particles.stream()
                                 .map(p -> -k * p.getPosition() - gamma * p.getV())
                                 .toList();

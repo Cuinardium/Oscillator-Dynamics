@@ -6,5 +6,5 @@ import ar.edu.itba.ss.g2.model.Particle;
 
 @FunctionalInterface
 public interface Equation {
-    List<Double> apply(List<Particle> state);
+    List<Double> apply(List<Particle> state, double t);
 }

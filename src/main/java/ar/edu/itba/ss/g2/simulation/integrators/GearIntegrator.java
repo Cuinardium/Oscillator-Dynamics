@@ -12,10 +12,13 @@ public class GearIntegrator implements MovementIntegrator {
 
     private final Equation forceEquation;
 
+    private double time;
+
     public GearIntegrator(List<Particle> particles, Equation forceEquation, double dt) {
         this.particles = particles.stream().map(Particle::new).toList();
         this.dt = dt;
         this.forceEquation = forceEquation;
+        this.time = 0;
     }
 
     @Override
@@ -69,7 +72,9 @@ public class GearIntegrator implements MovementIntegrator {
             particle.setPosition(nextR);
         }
 
-        List<Double> forces = forceEquation.apply(particles);
+        // TODO: revisar el update
+        time += dt;
+        List<Double> forces = forceEquation.apply(particles, time);
 
         // Correct
         for (int i = 0; i < particles.size(); i++) {

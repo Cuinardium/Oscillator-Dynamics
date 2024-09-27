@@ -14,13 +14,16 @@ public class BeemanIntegrator implements MovementIntegrator {
 
     private final Equation forceEquation;
 
+    private double time;
+
     public BeemanIntegrator(List<Particle> particles, Equation forceEquation, double deltaTime) {
         this.deltaTime = deltaTime;
         this.particles = new ArrayList<>(particles);
         this.previousParticles = new ArrayList<>(particles.size());
+        this.time = 0;
 
         // Euler for new pos and vel
-        List<Double> forces = forceEquation.apply(particles);
+        List<Double> forces = forceEquation.apply(particles, time);
         for (int i = 0; i < particles.size(); i++) {
             Particle particle = particles.get(i);
             double previousPosition =
@@ -49,9 +52,10 @@ public class BeemanIntegrator implements MovementIntegrator {
 
     @Override
     public void integrate() {
-
-        List<Double> currentForces = forceEquation.apply(particles);
-        List<Double> previousForces = forceEquation.apply(previousParticles);
+        // TODO: revisar el update
+        time += deltaTime;
+        List<Double> currentForces = forceEquation.apply(particles, time);
+        List<Double> previousForces = forceEquation.apply(previousParticles, time);
 
         // Positions
         for (int i = 0; i < particles.size(); i++) {
@@ -93,7 +97,7 @@ public class BeemanIntegrator implements MovementIntegrator {
             particle.setV(predictedVelocity);
         }
 
-        List<Double> nextForces = forceEquation.apply(particles);
+        List<Double> nextForces = forceEquation.apply(particles, time);
 
         // Correct velocities
         for (int i = 0; i < particles.size(); i++) {
