@@ -43,7 +43,7 @@ public class FileUtil {
         try (BufferedWriter writer =
                 new BufferedWriter(new FileWriter(directory + "/dynamic.txt"))) {
             for (int i = 0; i < snapshots.size(); i++) {
-                double t = i * dt;
+                double t = (i + 1) * dt;
                 writer.write(t + "\n");
 
                 List<Particle> snapshot = snapshots.get(i);
