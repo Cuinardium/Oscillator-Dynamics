@@ -1,4 +1,4 @@
-package ar.edu.itba.ss.g2.dampened.config2;
+package ar.edu.itba.ss.g2.coupled.config;
 
 public class Configuration {
     private final double m;
