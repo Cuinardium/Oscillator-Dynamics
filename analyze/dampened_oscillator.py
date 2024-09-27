@@ -79,7 +79,7 @@ def execute_simulations(
                 A,
                 i,
                 dt,
-                dt,
+                0.001,
                 tf,
                 root_dir=simulation_dir,
             )
@@ -140,18 +140,21 @@ def plot_results(results, output_dir="data/"):
 
     print("Plotting results")
 
-    # Used for plots vs time
-    selected_dt = 0.01
 
     all_positions = []
     all_times = []
     all_squared_errors = []
     labels = []
 
-    # Sorted list of dts
-    dts = [ dt for dt in sorted(set([result["dt"] for result in results]))]
-    mean_squared_errors = {integrator: [] for integrator in set([result["integrator"] for result in results])}
-    
+    # Nearest dt to 0.01, used for plots vs time
+    #selected_dt = min(dts, key=lambda x:abs(x-0.01))
+    selected_dt = 1e-6
+    analitic_pos_for_selected_dt = None
+    analitic_times_for_selected_dt = None
+                                
+
+    # Dict of integrator -> (dt, squared_error)
+    mean_squared_errors = {} 
     # Dict of dt -> analitic_positions
     all_analitic_positions = {}
 
@@ -170,11 +173,17 @@ def plot_results(results, output_dir="data/"):
         squared_error = np.square(np.array(positions) - np.array(all_analitic_positions[dt]))
         mean_squared_error = np.mean(squared_error)
 
-        dt_index = dts.index(dt)
-        mean_squared_errors[integrator].insert(dt_index, mean_squared_error)
+        if integrator not in mean_squared_errors:
+            mean_squared_errors[integrator] = []
 
+        mean_squared_errors[integrator].append((dt, mean_squared_error))
+        
         if dt != selected_dt:
             continue
+
+        if analitic_pos_for_selected_dt is None:
+            analitic_pos_for_selected_dt = all_analitic_positions[dt]
+            analitic_times_for_selected_dt = time
 
 
         all_squared_errors.append(squared_error)
@@ -182,14 +191,10 @@ def plot_results(results, output_dir="data/"):
         all_times.append(time)
         labels.append(integrator)
 
-    all_positions.append(all_analitic_positions[selected_dt])
-    all_times.append([selected_dt * i for i in range(len(all_analitic_positions[selected_dt]))])
-    labels.append("Analitico")
-
     plots.plot_positions_vs_time(
-        all_times,
-        all_positions,
-        labels,
+        all_times + [analitic_times_for_selected_dt],
+        all_positions + [analitic_pos_for_selected_dt],
+        labels + ["Analitic"],
         file_name=f"{output_dir}/positions_vs_time.png",
     )
 
@@ -201,7 +206,6 @@ def plot_results(results, output_dir="data/"):
     )
 
     plots.plot_mean_squared_error_vs_dt(
-        dts,
         mean_squared_errors,
         file_name=f"{output_dir}/mean_squared_error_vs_dt.png",
     )
@@ -227,8 +231,8 @@ if __name__ == "__main__":
             k=10000,
             m=170,
             A=1,
-            integrators=["beeman", "verlet"],
-            dts=list(np.linspace(0.0001, 0.1, num=1000)),
+            integrators=["beeman", "gear", "verlet"],
+            dts=list(np.linspace(1e-6, 0.1, num=100)),
             tf=5,
             simulation_dir=os.path.join(output_dir, "simulations"),
             max_workers=4,

@@ -66,18 +66,22 @@ def plot_squared_error_vs_time(
     plt.close()
 
 
+# mean_squared_errors, dict integrator -> list (dt, mean_squared_error)
 def plot_mean_squared_error_vs_dt(
-    dt_values, mean_squared_errors, file_name="mean_squared_error_vs_dt.png"
+   mean_squared_errors, file_name="mean_squared_error_vs_dt.png"
 ):
     plt.figure(figsize=(10, 6))
 
 
     line_styles = ["-", "--", "-.", ":"]
 
-    for i, integrator, mean_squared_error in zip(range(len(mean_squared_errors)), mean_squared_errors.keys(), mean_squared_errors.values()):
-        plt.plot(
-            dt_values, mean_squared_error, linestyle=line_styles[i % len(line_styles)], label=integrator
-        )
+    for i, (integrator, errors) in enumerate(mean_squared_errors.items()):
+        # Sort by dt
+        errors = sorted(errors, key=lambda x: x[0])
+        dts, mean_squared_error = zip(*errors)
+        line_style = line_styles[i % len(line_styles)]
+        plt.plot(dts, mean_squared_error, linestyle=line_style, label=integrator)
+    
 
     plt.xlabel("dt (s)")
     plt.ylabel("Error cuadrático medio (m$^2$)")
@@ -91,10 +95,12 @@ def plot_mean_squared_error_vs_dt(
     # Repeat with logaritmic and semi-logaritmic scale
     plt.figure(figsize=(10, 6))
 
-    for i, integrator, mean_squared_error in zip(range(len(mean_squared_errors)), mean_squared_errors.keys(), mean_squared_errors.values()):
-        plt.plot(
-            dt_values, mean_squared_error, linestyle=line_styles[i % len(line_styles)], label=integrator
-        )
+    for i, (integrator, errors) in enumerate(mean_squared_errors.items()):
+        # Sort by dt
+        errors = sorted(errors, key=lambda x: x[0])
+        dts, mean_squared_error = zip(*errors)
+        line_style = line_styles[i % len(line_styles)]
+        plt.plot(dts, mean_squared_error, linestyle=line_style, label=integrator)
 
     plt.xlabel("dt (s)")
     plt.ylabel("Error cuadrático medio (m$^2$)")
@@ -109,11 +115,13 @@ def plot_mean_squared_error_vs_dt(
     plt.figure(figsize=(10, 6))
 
     
-    for i, integrator, mean_squared_error in zip(range(len(mean_squared_errors)), mean_squared_errors.keys(), mean_squared_errors.values()):
-        plt.plot(
-            dt_values, mean_squared_error, linestyle=line_styles[i % len(line_styles)], label=integrator
-        )
-
+    for i, (integrator, errors) in enumerate(mean_squared_errors.items()):
+        # Sort by dt
+        errors = sorted(errors, key=lambda x: x[0])
+        dts, mean_squared_error = zip(*errors)
+        line_style = line_styles[i % len(line_styles)]
+        plt.plot(dts, mean_squared_error, linestyle=line_style, label=integrator)
+    
     plt.xlabel("dt (s)")
     plt.ylabel("Error cuadrático medio (m$^2$)")
 
