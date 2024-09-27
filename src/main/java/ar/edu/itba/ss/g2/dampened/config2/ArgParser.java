@@ -103,9 +103,9 @@ public class ArgParser {
             }
 
             try {
-                builder.setN(Double.parseDouble(cmd.getOptionValue("N")));
+                builder.setN(Integer.parseInt(cmd.getOptionValue("N")));
             } catch (NumberFormatException e) {
-                System.out.println("Error: Invalid format for number of particles (N). Expected a valid number.");
+                System.out.println("Error: Invalid format for number of particles (N). Expected an Integer.");
                 return null;
             }
 

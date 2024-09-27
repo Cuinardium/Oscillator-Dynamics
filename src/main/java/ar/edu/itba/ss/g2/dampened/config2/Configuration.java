@@ -5,7 +5,7 @@ public class Configuration {
     private final double k;
     private final double A;
     private final double l0;
-    private final double N;
+    private final int N;
     private final double tf;
     private final double dt;
     private final double dt2;
@@ -45,7 +45,7 @@ public class Configuration {
         return l0;
     }
 
-    public double getN() {
+    public int getN() {
         return N;
     }
 
@@ -74,7 +74,7 @@ public class Configuration {
         private double k;
         private double A;
         private double l0;
-        private double N;
+        private int N;
         private double tf;
         private double dt;
         private double dt2;
@@ -103,7 +103,7 @@ public class Configuration {
             return this;
         }
 
-        public Builder setN(double N) {
+        public Builder setN(int N) {
             this.N = N;
             return this;
         }
