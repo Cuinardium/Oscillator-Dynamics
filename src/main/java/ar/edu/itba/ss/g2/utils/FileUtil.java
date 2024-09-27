@@ -38,6 +38,33 @@ public class FileUtil {
         }
     }
 
+    public static void serializeStaticCoupled(
+        ar.edu.itba.ss.g2.coupled.config.Configuration configuration) throws IOException {
+
+    String directory = configuration.getOutputDir();
+
+    // Create directory if it doesn't exist
+    File dir = new File(directory);
+    if (!dir.exists()) {
+        dir.mkdirs();
+    }
+
+    // Static
+    try (FileWriter writer = new FileWriter(directory + "/static.txt")) {
+        writer.write(configuration.getM() + "\n");
+        writer.write(configuration.getK() + "\n");
+        writer.write(configuration.getA() + "\n");
+        writer.write(configuration.getL0() + "\n");
+        writer.write(configuration.getN() + "\n");
+        writer.write(configuration.getW() + "\n");
+        writer.write(configuration.getDt() + "\n");
+        writer.write(configuration.getDt2() + "\n");
+        writer.write(configuration.getTf() + "\n");
+        writer.write(configuration.getIntegrator() + "\n");
+    }
+}
+
+
     public static void serializeDynamic(List<List<Particle>> snapshots, String directory, Double dt)
             throws IOException {
         try (BufferedWriter writer =
