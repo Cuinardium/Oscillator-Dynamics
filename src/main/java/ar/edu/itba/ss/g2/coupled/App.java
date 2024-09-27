@@ -35,7 +35,7 @@ public class App {
         List<Particle> particleList = new ArrayList<>(N);
 
         for (int i = 0; i < N; i++) {
-            particleList.set(i, new Particle(i, 0.0, 0.0, m));
+            particleList.add(new Particle(i, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, m));
         }
 
         double dt = configuration.getDt();
@@ -51,16 +51,16 @@ public class App {
             double yActual = particles.get(0).getPosition();
             double ySiguiente = particles.get(1).getPosition();
             // first particle
-            result.set(0, -k*(yActual - ySiguiente) + A*Math.cos(w*t));
+            result.add(-k*(yActual - ySiguiente) + A*Math.cos(w*t));
             int limit = N-1;
             for(int i = 1; i < limit; i++) {
                 yAnterior = yActual;
                 yActual = ySiguiente;
                 ySiguiente = particles.get(i+1).getPosition();
-                result.set(i, -k*((yActual - yAnterior) + (yActual - ySiguiente)));
+                result.add(-k*((yActual - yAnterior) + (yActual - ySiguiente)));
             }
             // last particle
-            result.set(N-1, -k*((yActual - yAnterior) + (yActual - 0)));
+            result.add(-k*((yActual - yAnterior) + (yActual - 0)));
             return result;
         };
 
