@@ -16,9 +16,10 @@ public class ArgParser {
             List.of(
                     new Option("m", "mass", true, "Mass (kg)"),
                     new Option("k", "spring", true, "Spring constant (N/m)"),
-                    new Option("A", "aplitude", true, "Force applied amplitude (m)"),
+                    new Option("A", "amplitude", true, "Force applied amplitude (m)"),
                     new Option("l0", "l0", true, "Distance between particles (m)"),
-                    new Option("N", "N", true, "Numero de particulas"),
+                    new Option("N", "N", true, "Qty of particles"),
+                    new Option("w", "w", true, "Frequency (rad/t)"),
 
                     new Option("tf", "time", true, "Final time (s)"),
                     new Option("dt", "delta", true, "Integration time step (s)"),
@@ -63,6 +64,7 @@ public class ArgParser {
                     || !cmd.hasOption("A")
                     || !cmd.hasOption("l0")
                     || !cmd.hasOption("N")
+                    || !cmd.hasOption("w")
                     || !cmd.hasOption("tf")
                     || !cmd.hasOption("dt")
                     || !cmd.hasOption("dt2")
@@ -106,6 +108,14 @@ public class ArgParser {
                 builder.setN(Integer.parseInt(cmd.getOptionValue("N")));
             } catch (NumberFormatException e) {
                 System.out.println("Error: Invalid format for number of particles (N). Expected an Integer.");
+                return null;
+            }
+
+            try {
+                builder.setW(Double.parseDouble(cmd.getOptionValue("w")));
+            } catch (NumberFormatException e) {
+                System.out.println(
+                        "Error: Invalid format for frequency (w). Expected a valid number.");
                 return null;
             }
 

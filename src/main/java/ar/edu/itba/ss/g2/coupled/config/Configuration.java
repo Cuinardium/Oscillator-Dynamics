@@ -6,6 +6,7 @@ public class Configuration {
     private final double A;
     private final double l0;
     private final int N;
+    private final double w;
     private final double tf;
     private final double dt;
     private final double dt2;
@@ -20,6 +21,7 @@ public class Configuration {
         this.A = builder.A;
         this.l0 = builder.l0;
         this.N = builder.N;
+        this.w = builder.w;
         this.tf = builder.tf;
         this.dt = builder.dt;
         this.dt2 = builder.dt2;
@@ -49,6 +51,10 @@ public class Configuration {
         return N;
     }
 
+    public double getW() {
+        return w;
+    }
+
     public double getTf() {
         return tf;
     }
@@ -75,6 +81,7 @@ public class Configuration {
         private double A;
         private double l0;
         private int N;
+        private double w;
         private double tf;
         private double dt;
         private double dt2;
@@ -105,6 +112,11 @@ public class Configuration {
 
         public Builder setN(int N) {
             this.N = N;
+            return this;
+        }
+
+        public Builder setW(double w) {
+            this.w = w;
             return this;
         }
 
