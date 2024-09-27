@@ -28,6 +28,7 @@ public class Simulation {
 
             if (elapsed >= snapshotStep) {
                 snapshots.add(integrator.getState());
+                elapsed = 0;
             }
         }
     }
