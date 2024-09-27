@@ -6,6 +6,7 @@ import ar.edu.itba.ss.g2.model.Particle;
 import ar.edu.itba.ss.g2.simulation.Simulation;
 import ar.edu.itba.ss.g2.simulation.integrators.BeemanIntegrator;
 import ar.edu.itba.ss.g2.simulation.integrators.Equation;
+import ar.edu.itba.ss.g2.simulation.integrators.GearIntegrator;
 import ar.edu.itba.ss.g2.simulation.integrators.MovementIntegrator;
 import ar.edu.itba.ss.g2.simulation.integrators.VerletIntegrator;
 import ar.edu.itba.ss.g2.utils.FileUtil;
@@ -26,11 +27,16 @@ public class App {
 
         double k = configuration.getK();
         double gamma = configuration.getGamma();
+        double m = configuration.getM();
 
         double r0 = configuration.getR0();
-        double v0 = -r0 * (gamma / (2 * configuration.getM()));
+        double r1 = -r0 * (gamma / (2 * m));
+        double r2 = (-k * r0 - gamma * r1) / m;
+        double r3 = (-k * r1 - gamma * r2) / m;
+        double r4 = (-k * r2 - gamma * r3) / m;
+        double r5 = (-k * r3 - gamma * r4) / m;
 
-        Particle particle = new Particle(0, r0, v0, configuration.getM());
+        Particle particle = new Particle(0, r0, r1, r2, r3, r4, r5, m);
 
         Equation forceEquation =
                 (particles) ->
@@ -51,6 +57,9 @@ public class App {
             case "beeman":
                 integrator = new BeemanIntegrator(List.of(particle), forceEquation, dt);
                 break;
+            case "gear":
+                integrator = new GearIntegrator(List.of(particle), forceEquation, dt);
+                break;
             default:
                 System.err.println("Invalid integrator: " + configuration.getIntegrator());
                 System.exit(1);
@@ -65,8 +74,8 @@ public class App {
 
         try {
             FileUtil.serializeStaticDampened(configuration);
-            FileUtil.serializeDynamic(snapshots, outputDir, dt);
-        } catch (IOException e){
+            FileUtil.serializeDynamic(snapshots, outputDir, dt2);
+        } catch (IOException e) {
             System.err.println("Error writing output files: " + e.getMessage());
             System.exit(1);
         }
