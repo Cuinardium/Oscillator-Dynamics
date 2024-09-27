@@ -6,6 +6,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.List;
 
 public class FileUtil {
@@ -69,14 +70,20 @@ public class FileUtil {
             throws IOException {
         try (BufferedWriter writer =
                 new BufferedWriter(new FileWriter(directory + "/dynamic.txt"))) {
+
+            DecimalFormat formatter = new DecimalFormat("#.#########################");
+
             for (int i = 0; i < snapshots.size(); i++) {
                 double t = (i + 1) * dt;
-                writer.write(t + "\n");
+                writer.write(formatter.format(t) + "\n");
 
                 List<Particle> snapshot = snapshots.get(i);
                 for (Particle particle : snapshot) {
                     writer.write(
-                            String.format("%.7f %.7f\n", particle.getPosition(), particle.getV()));
+                            String.format(
+                                    "%s %s \n",
+                                    formatter.format(particle.getPosition()),
+                                    formatter.format(particle.getV())));
                 }
             }
         }
