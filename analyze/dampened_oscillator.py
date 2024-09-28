@@ -9,16 +9,6 @@ import plots
 import sys
 
 
-# Solucion analitica M.A.S subamortiguado
-def get_analitic_positions(time_steps, gamma, m, k, A):
-    analitic_positions = []
-    for t in time_steps:
-        exponent = -(gamma / (2 * m)) * t
-        cosine_argument = np.sqrt((k / m) - (gamma / (2 * m)) ** 2) * t
-        analitic_positions.append(A * np.exp(exponent) * np.cos(cosine_argument))
-
-    return analitic_positions
-
 def execute_simulation(gamma, k, m, A, i, dt, dt2, tf, root_dir="data/simulations"):
 
     name = f"dt-{dt}_i-{i}"
@@ -79,7 +69,7 @@ def execute_simulations(
                 A,
                 i,
                 dt,
-                0.001,
+                0.01 if dt <= 0.01 else dt,
                 tf,
                 root_dir=simulation_dir,
             )
@@ -146,31 +136,42 @@ def plot_results(results, output_dir="data/"):
     all_squared_errors = []
     labels = []
 
+    # Dict of dt -> analitic_positions (positions for analitic integrator)
+    analitic_positions = {}
+    analitic_times = {}
+    dts = set()
+    for result in results:
+        positions = result["positions"]
+        integrator = result["integrator"]
+        dt = result["dt"]
+
+        dts.add(dt)
+
+        if integrator == "analitic":
+            analitic_positions[dt] = positions
+            analitic_times[dt] = result["time"]
+
+
     # Nearest dt to 0.01, used for plots vs time
-    #selected_dt = min(dts, key=lambda x:abs(x-0.01))
-    selected_dt = 1e-6
-    analitic_pos_for_selected_dt = None
-    analitic_times_for_selected_dt = None
+    selected_dt = min(dts, key=lambda x:abs(x-0.01))
+    analitic_pos_for_selected_dt = analitic_positions[selected_dt]
+    analitic_times_for_selected_dt = analitic_times[selected_dt]
                                 
 
     # Dict of integrator -> (dt, squared_error)
     mean_squared_errors = {} 
-    # Dict of dt -> analitic_positions
-    all_analitic_positions = {}
 
     for result in results:
 
-        static_data = result["parameters"]
+        if result["integrator"] == "analitic":
+            continue
+
         time = result["time"]
         positions = result["positions"]
         integrator = result["integrator"]
         dt = result["dt"]
 
-        if dt not in all_analitic_positions:
-            all_analitic_positions[dt] = get_analitic_positions(time, static_data["Gamma"], static_data["M"], static_data["K"], static_data["R0"])
-
-
-        squared_error = np.square(np.array(positions) - np.array(all_analitic_positions[dt]))
+        squared_error = np.square(np.array(positions) - np.array(analitic_positions[dt]))
         mean_squared_error = np.mean(squared_error)
 
         if integrator not in mean_squared_errors:
@@ -181,11 +182,6 @@ def plot_results(results, output_dir="data/"):
         if dt != selected_dt:
             continue
 
-        if analitic_pos_for_selected_dt is None:
-            analitic_pos_for_selected_dt = all_analitic_positions[dt]
-            analitic_times_for_selected_dt = time
-
-
         all_squared_errors.append(squared_error)
         all_positions.append(positions)
         all_times.append(time)
@@ -194,7 +190,7 @@ def plot_results(results, output_dir="data/"):
     plots.plot_positions_vs_time(
         all_times + [analitic_times_for_selected_dt],
         all_positions + [analitic_pos_for_selected_dt],
-        labels + ["Analitic"],
+        labels + ["analitic"],
         file_name=f"{output_dir}/positions_vs_time.png",
     )
 
@@ -231,11 +227,12 @@ if __name__ == "__main__":
             k=10000,
             m=170,
             A=1,
-            integrators=["beeman", "gear", "verlet"],
-            dts=list(np.linspace(1e-6, 0.1, num=100)),
+            integrators=["beeman", "gear", "verlet", "analitic"],
+            dts=list(np.logspace(-6, -1, num=50)),
+            #dts=[1e-6],
             tf=5,
             simulation_dir=os.path.join(output_dir, "simulations"),
-            max_workers=4,
+            max_workers=5,
         )
 
         with open(os.path.join(output_dir, "results.json"), "w") as f:
