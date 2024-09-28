@@ -94,7 +94,7 @@ public class App {
 
         try {
             FileUtil.serializeStaticCoupled(configuration);
-            FileUtil.serializeDynamic(snapshots, outputDir, dt);
+            FileUtil.serializeDynamic(snapshots, outputDir, dt2);
         } catch (IOException e){
             System.err.println("Error writing output files: " + e.getMessage());
             System.exit(1);
