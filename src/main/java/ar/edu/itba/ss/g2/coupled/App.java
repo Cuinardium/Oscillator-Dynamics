@@ -51,16 +51,22 @@ public class App {
             double yActual = particles.get(0).getPosition();
             double ySiguiente = particles.get(1).getPosition();
             // first particle
-            result.add(-k*(yActual - ySiguiente) + A*Math.cos(w*t));
+            double force = -k*(yActual - ySiguiente) + A*Math.cos(w*t);
+            result.add(force);
             int limit = N-1;
             for(int i = 1; i < limit; i++) {
                 yAnterior = yActual;
                 yActual = ySiguiente;
                 ySiguiente = particles.get(i+1).getPosition();
-                result.add(-k*((yActual - yAnterior) + (yActual - ySiguiente)));
+                force = -k*((yActual - yAnterior) + (yActual - ySiguiente));
+                result.add(force);
             }
+            yAnterior = yActual;
+            yActual = ySiguiente;
             // last particle
-            result.add(-k*((yActual - yAnterior) + (yActual - 0)));
+            force = -k*((yActual - yAnterior) + (yActual - 0));
+            result.add(force);
+
             return result;
         };
 
