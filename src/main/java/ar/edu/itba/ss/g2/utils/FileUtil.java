@@ -71,7 +71,7 @@ public class FileUtil {
         try (BufferedWriter writer =
                 new BufferedWriter(new FileWriter(directory + "/dynamic.txt"))) {
 
-            DecimalFormat formatter = new DecimalFormat("#.#########################");
+            DecimalFormat formatter = new DecimalFormat("0.0000000000000000000000000000");
 
             for (int i = 0; i < snapshots.size(); i++) {
                 double t = (i + 1) * dt;

@@ -52,7 +52,6 @@ public class BeemanIntegrator implements MovementIntegrator {
 
     @Override
     public void integrate() {
-        // TODO: revisar el update
         time += deltaTime;
         List<Double> currentForces = forceEquation.apply(particles, time);
         List<Double> previousForces = forceEquation.apply(previousParticles, time);

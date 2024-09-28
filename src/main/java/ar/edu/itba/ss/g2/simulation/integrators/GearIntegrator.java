@@ -72,7 +72,6 @@ public class GearIntegrator implements MovementIntegrator {
             particle.setPosition(nextR);
         }
 
-        // TODO: revisar el update
         time += dt;
         List<Double> forces = forceEquation.apply(particles, time);
 
