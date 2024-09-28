@@ -131,7 +131,7 @@ public class ArgParser {
             }
 
             String integrator = cmd.getOptionValue("i").strip();
-            List<String> integrators = List.of("beeman", "verlet", "gear");
+            List<String> integrators = List.of("beeman", "verlet", "gear", "analitic");
             if (!integrators.contains(integrator)) {
                 System.out.println(
                         "Error: Invalid integrator. Expected one of: "

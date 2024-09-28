@@ -4,6 +4,7 @@ import ar.edu.itba.ss.g2.dampened.config.ArgParser;
 import ar.edu.itba.ss.g2.dampened.config.Configuration;
 import ar.edu.itba.ss.g2.model.Particle;
 import ar.edu.itba.ss.g2.simulation.Simulation;
+import ar.edu.itba.ss.g2.simulation.integrators.AnaliticSolution;
 import ar.edu.itba.ss.g2.simulation.integrators.BeemanIntegrator;
 import ar.edu.itba.ss.g2.simulation.integrators.Equation;
 import ar.edu.itba.ss.g2.simulation.integrators.GearIntegrator;
@@ -44,6 +45,12 @@ public class App {
                                 .map(p -> -k * p.getPosition() - gamma * p.getV())
                                 .toList();
 
+        Equation analiticSolution =
+                (particles, t) ->
+                        particles.stream()
+                                .map(p -> r0 * Math.exp(-gamma * t / (2 * m)) * Math.cos(Math.sqrt(k / m - Math.pow(gamma / (2 * m), 2)) * t))
+                                .toList();
+
         double dt = configuration.getDt();
         double dt2 = configuration.getDt2();
         double tf = configuration.getTf();
@@ -59,6 +66,9 @@ public class App {
                 break;
             case "gear":
                 integrator = new GearIntegrator(List.of(particle), forceEquation, dt);
+                break;
+            case "analitic":
+                integrator = new AnaliticSolution(List.of(particle), analiticSolution, dt);
                 break;
             default:
                 System.err.println("Invalid integrator: " + configuration.getIntegrator());
