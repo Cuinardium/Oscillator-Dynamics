@@ -11,7 +11,7 @@ import sys
 
 def execute_simulation(gamma, k, m, A, i, dt, dt2, tf, root_dir="data/simulations"):
 
-    name = f"dt-{dt}_i-{i}"
+    name = f"dt-{dt}_i-{i}-d"
     unique_dir = os.path.join(root_dir, name)
 
     os.makedirs(unique_dir, exist_ok=True)
@@ -37,7 +37,7 @@ def execute_simulation(gamma, k, m, A, i, dt, dt2, tf, root_dir="data/simulation
         "-dt2",
         str(dt2),
         "-tf",
-        str(tf)
+        str(tf),
     ]
 
     try:
@@ -52,7 +52,15 @@ def execute_simulation(gamma, k, m, A, i, dt, dt2, tf, root_dir="data/simulation
 
 
 def execute_simulations(
-    gamma, k, m, A, integrators, dts, tf, simulation_dir="data/simulations", max_workers=4
+    gamma,
+    k,
+    m,
+    A,
+    integrators,
+    dts,
+    tf,
+    simulation_dir="data/simulations",
+    max_workers=4,
 ):
 
     print("Executing simulations")
@@ -97,19 +105,13 @@ def execute_simulations(
             static_data = utils.parse_static_file_dampened(static_file)
             time, positions, _ = utils.parse_dynamic_file(1, dynamic_file)
 
-            gamma = static_data["Gamma"]
-            k = static_data["K"]
-            m = static_data["M"]
-            A = static_data["R0"]
-            integrator = static_data["Integrator"]
-
             # Convert to python lists
             results.append(
                 {
                     "parameters": static_data,
                     "time": list(time),
                     "positions": list(positions[:, 0]),
-                    "integrator": integrator,
+                    "integrator": static_data["Integrator"],
                     "dt": static_data["Dt"],
                 }
             )
@@ -126,10 +128,10 @@ def execute_simulations(
 
     return results
 
+
 def plot_results(results, output_dir="data/"):
 
     print("Plotting results")
-
 
     all_positions = []
     all_times = []
@@ -151,15 +153,13 @@ def plot_results(results, output_dir="data/"):
             analitic_positions[dt] = positions
             analitic_times[dt] = result["time"]
 
-
     # Nearest dt to 0.01, used for plots vs time
-    selected_dt = min(dts, key=lambda x:abs(x-0.01))
+    selected_dt = min(dts, key=lambda x: abs(x - 0.01))
     analitic_pos_for_selected_dt = analitic_positions[selected_dt]
     analitic_times_for_selected_dt = analitic_times[selected_dt]
-                                
 
     # Dict of integrator -> (dt, squared_error)
-    mean_squared_errors = {} 
+    mean_squared_errors = {}
 
     for result in results:
 
@@ -171,14 +171,16 @@ def plot_results(results, output_dir="data/"):
         integrator = result["integrator"]
         dt = result["dt"]
 
-        squared_error = np.square(np.array(positions) - np.array(analitic_positions[dt]))
+        squared_error = np.square(
+            np.array(positions) - np.array(analitic_positions[dt])
+        )
         mean_squared_error = np.mean(squared_error)
 
         if integrator not in mean_squared_errors:
             mean_squared_errors[integrator] = []
 
         mean_squared_errors[integrator].append((dt, mean_squared_error))
-        
+
         if dt != selected_dt:
             continue
 
@@ -206,8 +208,6 @@ def plot_results(results, output_dir="data/"):
         file_name=f"{output_dir}/mean_squared_error_vs_dt.png",
     )
 
-
-
     print("Results plotted")
 
 
@@ -220,7 +220,6 @@ if __name__ == "__main__":
 
     output_dir = sys.argv[2] if len(sys.argv) == 3 else "data/"
 
-
     if sys.argv[1] == "generate":
         results = execute_simulations(
             gamma=100,
@@ -229,7 +228,7 @@ if __name__ == "__main__":
             A=1,
             integrators=["beeman", "gear", "verlet", "analitic"],
             dts=list(np.logspace(-6, -1, num=50)),
-            #dts=[1e-6],
+            # dts=[1e-6],
             tf=5,
             simulation_dir=os.path.join(output_dir, "simulations"),
             max_workers=5,

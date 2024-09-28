@@ -53,3 +53,32 @@ def parse_static_file_dampened(path="static.txt"):
         "Tf": Tf,
         "Integrator": Integrator,
     }
+
+def parse_static_file_coupled(path="static.txt"):
+    with open(path, "r") as f:
+        lines = f.readlines()
+
+    # Parse each line and convert to the appropriate data type
+    M = float(lines[0].strip())
+    K = float(lines[1].strip())
+    A = float(lines[2].strip())
+    L0 = float(lines[3].strip())
+    N = int(lines[4].strip())  # N is likely an integer (number of particles)
+    W = float(lines[5].strip())
+    Dt = float(lines[6].strip())
+    Dt2 = float(lines[7].strip())
+    Tf = float(lines[8].strip())
+    integrator = lines[9].strip()  # Assuming integrator is a string
+
+    return {
+        "M": M,
+        "K": K,
+        "A": A,
+        "L0": L0,
+        "N": N,
+        "W": W,
+        "Dt": Dt,
+        "Dt2": Dt2,
+        "Tf": Tf,
+        "Integrator": integrator
+    }
