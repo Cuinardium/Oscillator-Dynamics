@@ -23,8 +23,19 @@ public class Simulation {
     }
 
     public void run(double maxTime) {
+
+        int printElapsed = 0;
+        int iterations = (int) (maxTime / timeStep);
+        int printStep = iterations >= 10 ? iterations / 10 : 1;
+
         for (double t = 0, elapsed = 0; t < maxTime; t += timeStep, elapsed += timeStep) {
             integrator.integrate();
+
+            printElapsed++;
+            if (printElapsed >= printStep) {
+                System.out.println(String.format("Progress: %.2f/%.2f", t, maxTime));
+                printElapsed = 0;
+            }
 
             if (elapsed >= snapshotStep) {
                 snapshots.add(integrator.getState());

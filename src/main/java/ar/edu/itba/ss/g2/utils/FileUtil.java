@@ -67,14 +67,24 @@ public class FileUtil {
 
     public static void serializeDynamic(List<List<Double>> snapshots, String directory, Double dt)
             throws IOException {
+        System.out.println("Writing...");
         try (BufferedWriter writer =
                 new BufferedWriter(new FileWriter(directory + "/dynamic.txt"))) {
 
             DecimalFormat formatter = new DecimalFormat("0.0000000000000000000000000000");
 
+            int elapsed = 0;
+            int printStep = snapshots.size() >= 10 ? snapshots.size() / 10 : 1;
+
             for (int i = 0; i < snapshots.size(); i++) {
                 double t = (i + 1) * dt;
                 writer.write(formatter.format(t) + "\n");
+
+                elapsed++;
+                if (elapsed >= printStep) {
+                    System.out.println("Progress: " + (i + 1) + "/" + snapshots.size());
+                    elapsed = 0;
+                }
 
                 List<Double> positions = snapshots.get(i);
                 for (Double position : positions) {
