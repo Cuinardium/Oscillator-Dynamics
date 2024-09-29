@@ -9,7 +9,9 @@ import plots
 import sys
 
 
-def execute_simulation(k, m, A, l0, N, w, i, dt, dt2, tf, root_dir="data/simulations"):
+def execute_simulation(
+    k, m, A, l0, N, w, i, dt, dt2, tf, memory, root_dir="data/simulations"
+):
 
     name = f"w-{w}_k-{k}"
     unique_dir = os.path.join(root_dir, name)
@@ -18,6 +20,8 @@ def execute_simulation(k, m, A, l0, N, w, i, dt, dt2, tf, root_dir="data/simulat
 
     command = [
         "java",
+        f"-Xms{memory}",
+        f"-Xmx{memory}",
         "-jar",
         "target/coupled-oscillator-jar-with-dependencies.jar",
         "-out",
@@ -66,12 +70,14 @@ def execute_simulations(
     ws,
     ks,
     simulation_dir="data/simulations",
+    memory=6,
     max_workers=4,
 ):
 
     print("Executing simulations")
 
     dirs = []
+    memory = memory // max_workers
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
@@ -85,8 +91,9 @@ def execute_simulations(
                 w,
                 i,
                 dt,
-                0.005 if dt <= 0.005 else dt,
-                tf,
+                0.01 if dt <= 0.01 else dt,
+                tf if k > 100 else 100,
+                f"{memory}G",
                 root_dir=simulation_dir,
             )
             for k in ks
@@ -113,14 +120,14 @@ def execute_simulations(
             static_data = utils.parse_static_file_coupled(static_file)
             time, positions = utils.parse_dynamic_file(N, dynamic_file)
 
+            amplitudes = utils.calculate_amplitudes(positions)
+
             # Convert to python lists
             results.append(
                 {
                     "parameters": static_data,
                     "time": list(time),
-                    "positions": list(
-                        list(particle_positions) for particle_positions in positions
-                    ),
+                    "amplitudes": list(amplitudes),
                     "k": static_data["K"],
                     "w": static_data["W"],
                 }
@@ -143,6 +150,65 @@ def plot_results(results, output_dir="data/"):
 
     print("Plotting results")
 
+    # dict of k -> (w, max_amplitude)
+    max_amplitudes = {}
+
+    # Create output directories
+    os.makedirs(os.path.join(output_dir, "amplitudes_vs_time"), exist_ok=True)
+    os.makedirs(os.path.join(output_dir, "amplitudes_vs_w"), exist_ok=True)
+
+    for result in results:
+        amplitudes = result["amplitudes"]
+        w = result["w"]
+        k = result["k"]
+
+        # Plot the amplitudes over time
+        plots.plot_amplitudes_vs_time(
+            result["time"],
+            amplitudes,
+            os.path.join(
+                output_dir, "amplitudes_vs_time", f"amplitudes_vs_time_k-{k}_w-{w:.2f}.png"
+            ),
+        )
+
+        if k not in max_amplitudes:
+            max_amplitudes[k] = []
+
+        max_amplitudes[k].append((w, max(amplitudes)))
+
+    resonances = []
+
+    for k, data in max_amplitudes.items():
+        ws = []
+        amplitudes = []
+
+        for w, amplitude in sorted(data, key=lambda x: x[0]):
+            ws.append(w)
+            amplitudes.append(amplitude)
+
+        plots.plot_amplitudes_vs_w(
+            ws,
+            amplitudes,
+            os.path.join(output_dir, "amplitudes_vs_w", f"amplitudes_vs_w_k-{k}.png"),
+        )
+
+        resonances.append((k, ws[amplitudes.index(max(amplitudes))]))
+
+    ks = [k for k, _ in sorted(resonances, key=lambda x: x[0])]
+    ws = [w for _, w in sorted(resonances, key=lambda x: x[0])]
+
+    plots.plot_resonances_vs_k(
+        ks,
+        ws,
+        os.path.join(output_dir, "resonances.png"),
+    )
+
+    plots.plot_resonance_squared_vs_k(
+        ks,
+        ws,
+        os.path.join(output_dir, "resonance_square.png"),
+    )
+
     print("Results plotted")
 
 
@@ -163,23 +229,23 @@ def animate(positions, l0, omega, dt, output_file="data/animation.mp4"):
     # Set up the figure and axis
     fig, ax = plt.subplots()
     ax.set_xlim(
-        - 2 * l0, l0 * num_particles
+        -2 * l0, l0 * num_particles
     )  # Fixed x-limits based on particle separation
     min_y = min(positions.flatten())
     max_y = max(positions.flatten())
+    extra = (max_y - min_y) / 5
     ax.set_ylim(
-        min_y - 0.1 * min_y,
-        max_y + 0.1 * max_y,
+        min_y - extra, max_y + extra
     )  # Dynamic y-limits based on particle movement
 
     # Initialize the scatter plot for particles
-    (particles,) = ax.plot([], [], "bo", ms=6)  # 'bo' means blue circles
+    (particles,) = ax.plot([], [], "bo", ms=1)  # 'bo' means blue circles
 
     # Line objects for connecting particles and the wall
-    particle_lines, = ax.plot([], [], "b-", lw=1)  # Lines between particles
+    (particle_lines,) = ax.plot([], [], "b-", lw=1)  # Lines between particles
     (wall_line,) = ax.plot([], [], "b-", lw=1)
     # Initialize a quiver for the cosine output
-    quiver = ax.quiver(-l0, 0, 0, 0, angles='xy', scale_units='xy', scale=1, color='g')
+    quiver = ax.quiver(-l0, 0, 0, 0, angles="xy", scale_units="xy", scale=1, color="g")
 
     frames = len(positions)
 
@@ -194,19 +260,20 @@ def animate(positions, l0, omega, dt, output_file="data/animation.mp4"):
         # Update lines between particles
         particle_lines.set_data(x_coords, positions[frame])  # Connect particles
 
-
         # Update line to the wall at y=0 from the rightmost particle
         wall_line.set_data(
             [x_coords[-1], x_coords[-1] + l0], [positions[frame][-1], 0]
         )  # Rightmost particle to wall
 
         # Calculate the output of cos(ω * (dt * frame))
-        y_quiver = np.cos(omega * (dt * frame)) * (max_y - min_y) / 10  # Scale to y-limits
-        
+        y_quiver = (
+            np.cos(omega * (dt * frame)) * (max_y - min_y) / 10
+        )  # Scale to y-limits
+
         # Update the quiver to represent the cosine output
         quiver.set_offsets([-l0, positions[frame][0]])
         quiver.set_UVC(0, y_quiver)  # Update the quiver's vertical component
-        
+
         return particles, particle_lines, wall_line, quiver
 
     # Number of frames equals the number of snapshots
@@ -238,14 +305,15 @@ if __name__ == "__main__":
             m=0.001,
             A=0.01,
             l0=0.0001,
-            N=3,
-            i="gear",
-            dt=0.001,
-            tf=5,
-            ws=[1],
-            ks=[100],
+            N=1000,
+            i="beeman",
+            dt=0.0001,
+            tf=10,
+            ws=list(np.linspace(0.01, 0.99, 30)) + list(np.linspace(1, 10, 80)),
+            ks=[100, 2000, 4000, 7000, 10000],
             simulation_dir=os.path.join(output_dir, "simulations"),
-            max_workers=5,
+            memory=12,
+            max_workers=12,
         )
 
         with open(os.path.join(output_dir, "results.json"), "w") as f:
@@ -261,7 +329,7 @@ if __name__ == "__main__":
             results = json.load(f)
 
         selected_k = 100
-        selected_w = 1
+        selected_w = 10
 
         for result in results:
             if result["k"] == selected_k and result["w"] == selected_w:
@@ -274,8 +342,18 @@ if __name__ == "__main__":
                 )
                 sys.exit(0)
 
-        print(f"Results for k={selected_k}, w={selected_w} not found")
-        sys.exit(1)
+        # Randomly select a result if the selected k and w are not found
+        result = results[0]
+        print(
+            f"Selected k={selected_k} and w={selected_w} not found. Using k={result['k']} and w={result['w']} instead."
+        )
+        animate(
+            result["positions"],
+            result["parameters"]["L0"],
+            result["parameters"]["W"],
+            result["parameters"]["Dt2"],
+            output_file=os.path.join(output_dir, "animation.mp4"),
+        )
 
     else:
         print("Usage: python dampened_oscillator.py <generate|plot>")

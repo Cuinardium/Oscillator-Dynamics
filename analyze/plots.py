@@ -104,3 +104,68 @@ def plot_mean_squared_error_vs_dt(
     plt.savefig(file_name)
 
     plt.close()
+
+
+def plot_amplitudes_vs_time(
+    times, amplitudes, file_name="amplitudes_vs_time.png"
+):
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(times, amplitudes)
+
+    y_max = max(amplitudes)
+
+    plt.ylim(
+        0,
+        y_max + 0.1 * y_max,
+    )
+
+    plt.xlabel("Tiempo (s)")
+    plt.ylabel("Amplitud (m)")
+
+    plt.savefig(file_name)
+
+    plt.close()
+
+
+def plot_amplitudes_vs_w(ws, amplitudes, file_name="amplitudes_vs_w.png"):
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(ws, amplitudes, marker="o", markersize=3, linestyle=":")
+
+    plt.xlabel("w (rad/s)")
+    plt.ylabel("Amplitud (m)")
+
+    plt.savefig(file_name)
+
+    plt.close()
+
+def plot_resonances_vs_k(
+    ks, resonances, file_name="resonances_vs_k.png"
+):
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(ks, resonances, marker="o", markersize=3, linestyle=":")
+
+    plt.xlabel("k (N/m)")
+    plt.ylabel("Frecuencia de resonancia (rad/s)")
+
+    plt.savefig(file_name)
+
+    plt.close()
+
+def plot_resonance_squared_vs_k(
+    ks, resonances, file_name="resonance_squared_vs_k.png"
+):
+    plt.figure(figsize=(10, 6))
+
+    resonances = [resonance**2 for resonance in resonances]
+
+    plt.plot(ks, resonances, marker="o", markersize=3, linestyle=":")
+
+    plt.xlabel("k (N/m)")
+    plt.ylabel("Frecuencia de resonancia al cuadrado (rad$^2$/s$^2$)")
+
+    plt.savefig(file_name)
+
+    plt.close()

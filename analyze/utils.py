@@ -78,3 +78,17 @@ def parse_static_file_coupled(path="static.txt"):
         "Tf": Tf,
         "Integrator": integrator
     }
+
+
+# Positions is a 2D NumPy array where each row represents a snapshot in time
+def calculate_amplitudes(positions):
+    # Return the maximum distance to equilibrium for each time snapshot
+
+    system_amplitudes = []
+
+    for snapshot in positions:
+        # Calculate the amplitude for each particle in the snapshot
+        particle_amplitudes = [abs(pos) for pos in snapshot]
+        system_amplitudes.append(max(particle_amplitudes))
+    
+    return system_amplitudes
