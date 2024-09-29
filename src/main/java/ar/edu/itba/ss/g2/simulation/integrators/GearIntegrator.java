@@ -72,13 +72,12 @@ public class GearIntegrator implements MovementIntegrator {
             particle.setPosition(nextR);
         }
 
-        time += dt;
-        List<Double> forces = forceEquation.apply(particles, time);
+        List<Double> nextForces = forceEquation.apply(particles, time + dt);
 
         // Correct
         for (int i = 0; i < particles.size(); i++) {
             Particle particle = particles.get(i);
-            double force = forces.get(i);
+            double force = nextForces.get(i);
 
             double da = force / particle.getMass() - particle.getR2();
             double dR2 = da * Math.pow(dt, 2) / 2;
@@ -98,5 +97,7 @@ public class GearIntegrator implements MovementIntegrator {
             particle.setV(r1c);
             particle.setPosition(rc);
         }
+
+        time += dt;
     }
 }

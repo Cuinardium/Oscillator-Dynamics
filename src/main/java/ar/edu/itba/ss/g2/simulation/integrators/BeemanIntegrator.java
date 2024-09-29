@@ -52,9 +52,8 @@ public class BeemanIntegrator implements MovementIntegrator {
 
     @Override
     public void integrate() {
-        time += deltaTime;
         List<Double> currentForces = forceEquation.apply(particles, time);
-        List<Double> previousForces = forceEquation.apply(previousParticles, time);
+        List<Double> previousForces = forceEquation.apply(previousParticles, time - deltaTime);
 
         // Positions
         for (int i = 0; i < particles.size(); i++) {
@@ -96,7 +95,7 @@ public class BeemanIntegrator implements MovementIntegrator {
             particle.setV(predictedVelocity);
         }
 
-        List<Double> nextForces = forceEquation.apply(particles, time);
+        List<Double> nextForces = forceEquation.apply(particles, time + deltaTime);
 
         // Correct velocities
         for (int i = 0; i < particles.size(); i++) {
@@ -123,5 +122,7 @@ public class BeemanIntegrator implements MovementIntegrator {
 
             particle.setV(correctedVelocity);
         }
+
+        time += deltaTime;
     }
 }

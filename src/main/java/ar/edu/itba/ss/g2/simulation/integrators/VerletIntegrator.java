@@ -52,8 +52,8 @@ public class VerletIntegrator implements MovementIntegrator {
 
     @Override
     public void integrate() {
-        time += deltaTime;
         List<Double> forces = forceEquation.apply(particles, time);
+        time += deltaTime;
 
         for (int i = 0; i < particles.size(); i++) {
 
