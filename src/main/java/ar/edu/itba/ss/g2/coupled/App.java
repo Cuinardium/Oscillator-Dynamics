@@ -34,7 +34,8 @@ public class App {
 
         List<Particle> particleList = new ArrayList<>(N);
 
-        for (int i = 0; i < N; i++) {
+        particleList.add(new Particle(0, 0.0, 0.0, A/m, 0.0, -A/m, 0.0, m));
+        for (int i = 1; i < N; i++) {
             particleList.add(new Particle(i, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, m));
         }
 
