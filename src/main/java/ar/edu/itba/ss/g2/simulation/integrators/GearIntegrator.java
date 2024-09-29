@@ -22,8 +22,8 @@ public class GearIntegrator implements MovementIntegrator {
     }
 
     @Override
-    public List<Particle> getState() {
-        return particles.stream().map(Particle::new).toList();
+    public List<Double> getState() {
+        return particles.stream().map(Particle::getPosition).toList();
     }
 
     @Override

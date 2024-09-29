@@ -103,7 +103,7 @@ def execute_simulations(
             dynamic_file = os.path.join(dir, "dynamic.txt")
 
             static_data = utils.parse_static_file_dampened(static_file)
-            time, positions, _ = utils.parse_dynamic_file(1, dynamic_file)
+            time, positions = utils.parse_dynamic_file(1, dynamic_file)
 
             # Convert to python lists
             results.append(

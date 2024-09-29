@@ -13,7 +13,7 @@ public class Simulation {
 
     private final MovementIntegrator integrator;
 
-    private final List<List<Particle>> snapshots;
+    private final List<List<Double>> snapshots;
 
     public Simulation(double timeStep, double snapshotStep, MovementIntegrator integrator) {
         this.timeStep = timeStep;
@@ -33,7 +33,7 @@ public class Simulation {
         }
     }
 
-    public List<List<Particle>> getSnapshots() {
+    public List<List<Double>> getSnapshots() {
         return snapshots;
     }
 }

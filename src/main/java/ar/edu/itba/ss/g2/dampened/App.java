@@ -79,7 +79,7 @@ public class App {
         Simulation simulation = new Simulation(dt, dt2, integrator);
         simulation.run(tf);
 
-        List<List<Particle>> snapshots = simulation.getSnapshots();
+        List<List<Double>> snapshots = simulation.getSnapshots();
         String outputDir = configuration.getOutputDir();
 
         try {

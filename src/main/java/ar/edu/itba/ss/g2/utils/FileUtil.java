@@ -65,7 +65,7 @@ public class FileUtil {
         }
     }
 
-    public static void serializeDynamic(List<List<Particle>> snapshots, String directory, Double dt)
+    public static void serializeDynamic(List<List<Double>> snapshots, String directory, Double dt)
             throws IOException {
         try (BufferedWriter writer =
                 new BufferedWriter(new FileWriter(directory + "/dynamic.txt"))) {
@@ -76,13 +76,9 @@ public class FileUtil {
                 double t = (i + 1) * dt;
                 writer.write(formatter.format(t) + "\n");
 
-                List<Particle> snapshot = snapshots.get(i);
-                for (Particle particle : snapshot) {
-                    writer.write(
-                            String.format(
-                                    "%s %s \n",
-                                    formatter.format(particle.getPosition()),
-                                    formatter.format(particle.getV())));
+                List<Double> positions = snapshots.get(i);
+                for (Double position : positions) {
+                    writer.write(String.format("%s\n", formatter.format(position)));
                 }
             }
         }

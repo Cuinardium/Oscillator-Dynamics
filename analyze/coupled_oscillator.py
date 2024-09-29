@@ -111,7 +111,7 @@ def execute_simulations(
             dynamic_file = os.path.join(dir, "dynamic.txt")
 
             static_data = utils.parse_static_file_coupled(static_file)
-            time, positions, _ = utils.parse_dynamic_file(N, dynamic_file)
+            time, positions = utils.parse_dynamic_file(N, dynamic_file)
 
             # Convert to python lists
             results.append(
