@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 # Set up the figure and axis for the plot
@@ -145,7 +146,7 @@ def plot_resonances_vs_k(
 ):
     plt.figure(figsize=(10, 6))
 
-    plt.plot(ks, resonances, marker="o", markersize=3, linestyle=":")
+    plt.plot(ks, resonances, marker="o", markersize=5, linestyle="")
 
     plt.xlabel("k (N/m)")
     plt.ylabel("Frecuencia de resonancia (rad/s)")
@@ -154,18 +155,40 @@ def plot_resonances_vs_k(
 
     plt.close()
 
-def plot_resonance_squared_vs_k(
-    ks, resonances, file_name="resonance_squared_vs_k.png"
+def plot_resonance_with_best_constant_vs_k(
+    ks, resonances, best_constant, file_name="resonances_with_best_constant_vs_k.png"
 ):
     plt.figure(figsize=(10, 6))
 
-    resonances = [resonance**2 for resonance in resonances]
+    plt.plot(ks, resonances, marker="o", markersize=5, linestyle="", label="Frecuencia de resonancia")
 
-    plt.plot(ks, resonances, marker="o", markersize=3, linestyle=":")
+    # Curve is best_constant * k^1/2
+    ks = np.linspace(0, max(ks), 100)
+    resonances = best_constant * np.sqrt(ks)
+    best_constant = "{:.4f}".format(best_constant)
+    plt.plot(ks, resonances, linestyle="-", color="r", label=f"{best_constant} * k$^1/2$")
+
 
     plt.xlabel("k (N/m)")
-    plt.ylabel("Frecuencia de resonancia al cuadrado (rad$^2$/s$^2$)")
+    plt.ylabel("Frecuencia de resonancia (rad/s)")
+
+    plt.legend()
 
     plt.savefig(file_name)
 
     plt.close()
+
+def plot_cuadratic_error_vs_constant(
+    constants, errors, file_name="cuadratic_error_vs_constant.png"
+):
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(constants, errors, marker="o", markersize=3, linestyle=":")
+
+    plt.xlabel("Constante")
+    plt.ylabel("Error cuadrático (m$^2$)")
+
+    plt.savefig(file_name)
+
+    plt.close()
+

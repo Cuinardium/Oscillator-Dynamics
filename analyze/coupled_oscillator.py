@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import concurrent.futures
 import numpy as np
+from scipy import signal
 import utils
 import json
 import plots
@@ -49,12 +50,12 @@ def execute_simulation(
     ]
 
     try:
-        print(f"Running simulation, w={w}, k={k}")
+        print(f"[WORKER] - Running simulation, w={w}, k={k}")
         subprocess.run(command, check=True, capture_output=True, text=True)
-        print(f"Simulation finished, w={w}, k={k}")
+        print(f"[WORKER] - Simulation finished, w={w}, k={k}")
     except subprocess.CalledProcessError as e:
-        print(f"Error running simulation, w={w}, k={k}")
-        print(f"Error: {e.stderr}")
+        print(f"[WORKER] - Error running simulation, w={w}, k={k}")
+        print(f"[WORKER] - {e.stderr}")
 
     return unique_dir
 
@@ -65,19 +66,16 @@ def execute_simulations(
     l0,
     N,
     i,
-    dt,
-    tf,
-    ws,
-    ks,
+    k_params,
+    combinations_to_animate,
     simulation_dir="data/simulations",
-    memory=6,
+    memory=1500,
     max_workers=4,
 ):
 
     print("Executing simulations")
 
     dirs = []
-    memory = memory // max_workers
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
@@ -90,58 +88,67 @@ def execute_simulations(
                 N,
                 w,
                 i,
-                dt,
-                0.01 if dt <= 0.01 else dt,
-                tf if k > 100 else 100,
-                f"{memory}G",
+                params["dt"],
+                params["dt2"],
+                params["tf"],
+                f"{memory}m",
                 root_dir=simulation_dir,
             )
-            for k in ks
-            for w in ws
+            for k, params in k_params.items()
+            for w in params["ws"]
         ]
 
+        jobs = len(futures)
+        completed = 0
+
+        results = []
         for future in concurrent.futures.as_completed(futures):
             try:
                 dir = future.result()
                 dirs.append(dir)
+                print(f"[MAIN {completed + 1}/{jobs}] - Parsing results from {dir}")
+
+                static_file = os.path.join(dir, "static.txt")
+                dynamic_file = os.path.join(dir, "dynamic.txt")
+
+                static_data = utils.parse_static_file_coupled(static_file)
+                time, positions = utils.parse_dynamic_file(N - 1, dynamic_file)
+
+
+                amplitudes = utils.calculate_amplitudes(positions)
+
+                # Convert to python lists
+                result = (
+                    {
+                        "parameters": static_data,
+                        "time": list(time),
+                        "amplitudes": list(amplitudes),
+                        "positions": [list(p) for p in positions],
+                        "k": static_data["K"],
+                        "w": static_data["W"],
+                    }
+                    if (static_data["K"], static_data["W"]) in combinations_to_animate
+                    else {
+                        "parameters": static_data,
+                        "time": list(time),
+                        "amplitudes": list(amplitudes),
+                        "k": static_data["K"],
+                        "w": static_data["W"],
+                    }
+                )
+
+                results.append(result)
+                print(f"[MAIN {completed + 1}/{jobs}] - Results parsed from {dir}")
+                completed += 1
             except Exception as e:
-                print(f"Error: {e}")
+                print(f"[MAIN {completed + 1}/{jobs}] - Error parsing results: {e}")
 
-    results = []
-
-    for dir in dirs:
-
-        try:
-            print(f"Parsing results from {dir}")
-
-            static_file = os.path.join(dir, "static.txt")
-            dynamic_file = os.path.join(dir, "dynamic.txt")
-
-            static_data = utils.parse_static_file_coupled(static_file)
-            time, positions = utils.parse_dynamic_file(N, dynamic_file)
-
-            amplitudes = utils.calculate_amplitudes(positions)
-
-            # Convert to python lists
-            results.append(
-                {
-                    "parameters": static_data,
-                    "time": list(time),
-                    "amplitudes": list(amplitudes),
-                    "k": static_data["K"],
-                    "w": static_data["W"],
-                }
-            )
-
-            print(f"Results parsed from {dir}")
-        except Exception as e:
-            print(f"Error: {e}")
 
     try:
-        print("Cleaning up")
+        print("Removing simulation directories")
         shutil.rmtree(simulation_dir)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error removing simulation directories: {e}")
 
     return results
 
@@ -163,18 +170,19 @@ def plot_results(results, output_dir="data/"):
         k = result["k"]
 
         # Plot the amplitudes over time
-        plots.plot_amplitudes_vs_time(
-            result["time"],
-            amplitudes,
-            os.path.join(
-                output_dir, "amplitudes_vs_time", f"amplitudes_vs_time_k-{k}_w-{w:.2f}.png"
-            ),
-        )
+        """ plots.plot_amplitudes_vs_time( """
+        """     result["time"], """
+        """     amplitudes, """
+        """     os.path.join( """
+        """         output_dir, "amplitudes_vs_time", f"amplitudes_vs_time_k-{k}_w-{w}.png" """
+        """     ), """
+        """ ) """
 
         if k not in max_amplitudes:
             max_amplitudes[k] = []
 
-        max_amplitudes[k].append((w, max(amplitudes)))
+        if len(amplitudes) > 0:
+            max_amplitudes[k].append((w, max(amplitudes)))
 
     resonances = []
 
@@ -192,7 +200,13 @@ def plot_results(results, output_dir="data/"):
             os.path.join(output_dir, "amplitudes_vs_w", f"amplitudes_vs_w_k-{k}.png"),
         )
 
-        resonances.append((k, ws[amplitudes.index(max(amplitudes))]))
+        peaks, _ = signal.find_peaks(amplitudes)
+
+        top_3_peaks = sorted(peaks, key=lambda x: amplitudes[x], reverse=True)[:3]
+        top_3_ws = [ws[i] for i in top_3_peaks]
+        w0 = min(top_3_ws)
+
+        resonances.append((k, w0))
 
     ks = [k for k, _ in sorted(resonances, key=lambda x: x[0])]
     ws = [w for _, w in sorted(resonances, key=lambda x: x[0])]
@@ -203,10 +217,29 @@ def plot_results(results, output_dir="data/"):
         os.path.join(output_dir, "resonances.png"),
     )
 
-    plots.plot_resonance_squared_vs_k(
+    # Try to do regression (raiz)
+    constants = np.linspace(0.098, 0.101, num=100)
+    cuadratic_errors = []
+    for constant in constants:
+        cuadratic_error = 0
+        for k, w in zip(ks, ws):
+            cuadratic_error += (w - constant * np.sqrt(k)) ** 2
+
+        cuadratic_errors.append(cuadratic_error)
+
+    best_constant = constants[cuadratic_errors.index(min(cuadratic_errors))]
+
+    plots.plot_resonance_with_best_constant_vs_k(
         ks,
         ws,
-        os.path.join(output_dir, "resonance_square.png"),
+        best_constant,
+        os.path.join(output_dir, "resonance.png"),
+    )
+
+    plots.plot_cuadratic_error_vs_constant(
+        constants,
+        cuadratic_errors,
+        os.path.join(output_dir, "cuadratic_error.png"),
     )
 
     print("Results plotted")
@@ -216,7 +249,7 @@ from matplotlib.animation import FuncAnimation, FFMpegWriter
 import matplotlib.pyplot as plt
 
 
-def animate(positions, l0, omega, dt, output_file="data/animation.mp4"):
+def animate(positions, l0, omega, dt, A, output_file="data/animation.mp4"):
     # Convert positions to a NumPy array for easier indexing
     positions = np.array(positions)
 
@@ -244,8 +277,12 @@ def animate(positions, l0, omega, dt, output_file="data/animation.mp4"):
     # Line objects for connecting particles and the wall
     (particle_lines,) = ax.plot([], [], "b-", lw=1)  # Lines between particles
     (wall_line,) = ax.plot([], [], "b-", lw=1)
-    # Initialize a quiver for the cosine output
-    quiver = ax.quiver(-l0, 0, 0, 0, angles="xy", scale_units="xy", scale=1, color="g")
+    # Forced particle that follows the A * sin(ωt) function
+    # Initialize the particle at the leftmost particle's position
+    (forced_particle,) = ax.plot(
+        [-l0], [0], "go", ms=2
+    )  
+
 
     frames = len(positions)
 
@@ -265,16 +302,13 @@ def animate(positions, l0, omega, dt, output_file="data/animation.mp4"):
             [x_coords[-1], x_coords[-1] + l0], [positions[frame][-1], 0]
         )  # Rightmost particle to wall
 
-        # Calculate the output of cos(ω * (dt * frame))
-        y_quiver = (
-            np.cos(omega * (dt * frame)) * (max_y - min_y) / 10
-        )  # Scale to y-limits
+        # Update the forced particle
+        t = frame * dt
+        forced_particle.set_data(
+            [-l0], [A * np.sin(omega * t)]
+        )
 
-        # Update the quiver to represent the cosine output
-        quiver.set_offsets([-l0, positions[frame][0]])
-        quiver.set_UVC(0, y_quiver)  # Update the quiver's vertical component
-
-        return particles, particle_lines, wall_line, quiver
+        return particles, particle_lines, wall_line, forced_particle
 
     # Number of frames equals the number of snapshots
     frames = len(positions)
@@ -301,59 +335,88 @@ if __name__ == "__main__":
     output_dir = sys.argv[2] if len(sys.argv) == 3 else "data/"
 
     if sys.argv[1] == "generate":
+        k_params = {
+            100: {
+                "ws": utils.generate_frequencies(1, 100),
+                "dt": 0.0001,
+                "dt2": 0.01,
+                "tf": 50,
+            },
+            2000: {
+                "ws": utils.generate_frequencies(4.45, 100),
+                "dt": 0.0001,
+                "dt2": 0.01,
+                "tf": 50,
+            },
+            4000: {
+                "ws": utils.generate_frequencies(6.285, 100),
+                "dt": 0.0001,
+                "dt2": 0.01,
+                "tf": 50,
+            },
+            7000: {
+                "ws": utils.generate_frequencies(8.31, 100),
+                "dt": 0.0001,
+                "dt2": 0.01,
+                "tf": 50,
+            },
+            10000: {
+                "ws": utils.generate_frequencies(9.935, 100),
+                "dt": 0.0001,
+                "dt2": 0.01,
+                "tf": 50,
+            },
+        }
+
+        combinations_to_animate = []
+
         results = execute_simulations(
             m=0.001,
             A=0.01,
-            l0=0.0001,
+            l0=0.001,
             N=1000,
-            i="beeman",
-            dt=0.0001,
-            tf=10,
-            ws=list(np.linspace(0.01, 0.99, 30)) + list(np.linspace(1, 10, 80)),
-            ks=[100, 2000, 4000, 7000, 10000],
+            i="verlet",
+            k_params=k_params,
+            combinations_to_animate=combinations_to_animate,
             simulation_dir=os.path.join(output_dir, "simulations"),
-            memory=12,
-            max_workers=12,
+            memory=1792,
+            max_workers=8,
         )
+
+        print("Saving results")
 
         with open(os.path.join(output_dir, "results.json"), "w") as f:
             json.dump(results, f)
 
     elif sys.argv[1] == "plot":
+        print("Loading results")
         with open(os.path.join(output_dir, "results.json"), "r") as f:
             results = json.load(f)
 
         plot_results(results, output_dir=output_dir)
     elif sys.argv[1] == "animate":
+        print("Loading results")
         with open(os.path.join(output_dir, "results.json"), "r") as f:
             results = json.load(f)
 
-        selected_k = 100
-        selected_w = 10
+        animated = False
 
         for result in results:
-            if result["k"] == selected_k and result["w"] == selected_w:
+            if "positions" in result:
+                print(f"Animating k={result['k']} w={result['w']}")
                 animate(
                     result["positions"],
                     result["parameters"]["L0"],
                     result["parameters"]["W"],
                     result["parameters"]["Dt2"],
-                    output_file=os.path.join(output_dir, "animation.mp4"),
+                    result["parameters"]["A"],
+                    output_file=os.path.join(output_dir, f"animation_{result['k']}_{result['w']}.mp4"),
                 )
-                sys.exit(0)
+                animated = True
 
-        # Randomly select a result if the selected k and w are not found
-        result = results[0]
-        print(
-            f"Selected k={selected_k} and w={selected_w} not found. Using k={result['k']} and w={result['w']} instead."
-        )
-        animate(
-            result["positions"],
-            result["parameters"]["L0"],
-            result["parameters"]["W"],
-            result["parameters"]["Dt2"],
-            output_file=os.path.join(output_dir, "animation.mp4"),
-        )
+        if not animated: 
+            print("No results with positions found")
+            sys.exit(1)
 
     else:
         print("Usage: python dampened_oscillator.py <generate|plot>")
