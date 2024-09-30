@@ -114,7 +114,6 @@ def execute_simulations(
                 static_data = utils.parse_static_file_coupled(static_file)
                 time, positions = utils.parse_dynamic_file(N - 1, dynamic_file)
 
-
                 amplitudes = utils.calculate_amplitudes(positions)
 
                 # Convert to python lists
@@ -142,7 +141,6 @@ def execute_simulations(
                 completed += 1
             except Exception as e:
                 print(f"[MAIN {completed + 1}/{jobs}] - Error parsing results: {e}")
-
 
     try:
         print("Removing simulation directories")
@@ -279,10 +277,7 @@ def animate(positions, l0, omega, dt, A, output_file="data/animation.mp4"):
     (wall_line,) = ax.plot([], [], "b-", lw=1)
     # Forced particle that follows the A * sin(ωt) function
     # Initialize the particle at the leftmost particle's position
-    (forced_particle,) = ax.plot(
-        [-l0], [0], "go", ms=2
-    )  
-
+    (forced_particle,) = ax.plot([-l0], [0], "go", ms=2)
 
     frames = len(positions)
 
@@ -304,9 +299,7 @@ def animate(positions, l0, omega, dt, A, output_file="data/animation.mp4"):
 
         # Update the forced particle
         t = frame * dt
-        forced_particle.set_data(
-            [-l0], [A * np.sin(omega * t)]
-        )
+        forced_particle.set_data([-l0], [A * np.sin(omega * t)])
 
         return particles, particle_lines, wall_line, forced_particle
 
@@ -335,6 +328,13 @@ if __name__ == "__main__":
     output_dir = sys.argv[2] if len(sys.argv) == 3 else "data/"
 
     if sys.argv[1] == "generate":
+        expected_resonances = [
+            1.0157894736842106,
+            4.4447368421052635,
+            6.290263157894737,
+            8.315263157894737,
+            9.929736842105264,
+        ]
         k_params = {
             100: {
                 "ws": utils.generate_frequencies(1, 100),
@@ -369,6 +369,22 @@ if __name__ == "__main__":
         }
 
         combinations_to_animate = []
+        for expected_resonance, k in zip(expected_resonances, k_params.keys()):
+            found_natural = False
+            found_first = False
+            found_second = False
+            for w in k_params[k]["ws"]:
+                if abs(w - expected_resonance) < 0.1 and not found_natural:
+                    combinations_to_animate.append((k, w))
+                    found_natural = True
+
+                if abs(w - 2 * expected_resonance) < 0.1 and not found_first:
+                    combinations_to_animate.append((k, w))
+                    found_first = True
+
+                if abs(w - 3 * expected_resonance) < 0.1 and not found_second:
+                    combinations_to_animate.append((k, w))
+                    found_second = True
 
         results = execute_simulations(
             m=0.001,
@@ -386,7 +402,8 @@ if __name__ == "__main__":
         print("Saving results")
 
         with open(os.path.join(output_dir, "results.json"), "w") as f:
-            json.dump(results, f)
+            for chunk in json.JSONEncoder().iterencode(results):
+                f.write(chunk)
 
     elif sys.argv[1] == "plot":
         print("Loading results")
@@ -410,11 +427,13 @@ if __name__ == "__main__":
                     result["parameters"]["W"],
                     result["parameters"]["Dt2"],
                     result["parameters"]["A"],
-                    output_file=os.path.join(output_dir, f"animation_{result['k']}_{result['w']}.mp4"),
+                    output_file=os.path.join(
+                        output_dir, f"animation_{result['k']}_{result['w']}.mp4"
+                    ),
                 )
                 animated = True
 
-        if not animated: 
+        if not animated:
             print("No results with positions found")
             sys.exit(1)
 
