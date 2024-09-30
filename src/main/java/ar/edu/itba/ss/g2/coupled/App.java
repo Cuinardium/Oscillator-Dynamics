@@ -34,7 +34,6 @@ public class App {
 
         List<Particle> particleList = new ArrayList<>(N);
 
-        particleList.add(new Particle(0, 0.0, 0.0, A/m, 0.0, -A/m, 0.0, m));
         for (int i = 1; i < N; i++) {
             particleList.add(new Particle(i, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, m));
         }
@@ -49,23 +48,21 @@ public class App {
         (particles, t) -> {
             List<Double> result = new ArrayList<>(N);
             double yAnterior = 0;
-            double yActual = particles.get(0).getPosition();
-            double ySiguiente = particles.get(1).getPosition();
-            // first particle
-            double force = -k*(yActual - ySiguiente) + A*Math.cos(w*t);
-            result.add(force);
-            int limit = N-1;
-            for(int i = 1; i < limit; i++) {
+            double yActual = A*Math.sin(w*t);
+            double ySiguiente = particles.get(0).getPosition();
+
+            int limit = N-2;
+            for(int i = 0; i < limit; i++) {
                 yAnterior = yActual;
                 yActual = ySiguiente;
                 ySiguiente = particles.get(i+1).getPosition();
-                force = -k*((yActual - yAnterior) + (yActual - ySiguiente));
+                double force = -k*((yActual - yAnterior) + (yActual - ySiguiente));
                 result.add(force);
             }
             yAnterior = yActual;
             yActual = ySiguiente;
             // last particle
-            force = -k*((yActual - yAnterior) + (yActual - 0));
+            double force = -k*((yActual - yAnterior) + (yActual - 0));
             result.add(force);
 
             return result;
