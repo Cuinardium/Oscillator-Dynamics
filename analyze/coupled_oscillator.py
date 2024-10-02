@@ -17,6 +17,10 @@ def execute_simulation(
     name = f"w-{w}_k-{k}"
     unique_dir = os.path.join(root_dir, name)
 
+    # If unique dir exists return it
+    if os.path.exists(unique_dir):
+        return unique_dir
+
     os.makedirs(unique_dir, exist_ok=True)
 
     command = [
@@ -168,13 +172,13 @@ def plot_results(results, output_dir="data/"):
         k = result["k"]
 
         # Plot the amplitudes over time
-        """ plots.plot_amplitudes_vs_time( """
-        """     result["time"], """
-        """     amplitudes, """
-        """     os.path.join( """
-        """         output_dir, "amplitudes_vs_time", f"amplitudes_vs_time_k-{k}_w-{w}.png" """
-        """     ), """
-        """ ) """
+        plots.plot_amplitudes_vs_time(
+            result["time"],
+            amplitudes,
+            os.path.join(
+                output_dir, "amplitudes_vs_time", f"amplitudes_vs_time_k-{k}_w-{w}.png"
+            ),
+        )
 
         if k not in max_amplitudes:
             max_amplitudes[k] = []
@@ -370,21 +374,11 @@ if __name__ == "__main__":
 
         combinations_to_animate = []
         for expected_resonance, k in zip(expected_resonances, k_params.keys()):
-            found_natural = False
-            found_first = False
-            found_second = False
-            for w in k_params[k]["ws"]:
-                if abs(w - expected_resonance) < 0.1 and not found_natural:
-                    combinations_to_animate.append((k, w))
-                    found_natural = True
-
-                if abs(w - 2 * expected_resonance) < 0.1 and not found_first:
-                    combinations_to_animate.append((k, w))
-                    found_first = True
-
-                if abs(w - 3 * expected_resonance) < 0.1 and not found_second:
-                    combinations_to_animate.append((k, w))
-                    found_second = True
+            for harmonic in range(1, 4):
+                res_w = harmonic * expected_resonance
+                closest_w = min(k_params[k]["ws"], key=lambda w: abs(w - res_w))
+                if abs(closest_w - res_w) < 0.1:
+                    combinations_to_animate.append((k, closest_w))
 
         results = execute_simulations(
             m=0.001,
@@ -402,8 +396,7 @@ if __name__ == "__main__":
         print("Saving results")
 
         with open(os.path.join(output_dir, "results.json"), "w") as f:
-            for chunk in json.JSONEncoder().iterencode(results):
-                f.write(chunk)
+            json.dump(results, f)
 
     elif sys.argv[1] == "plot":
         print("Loading results")
@@ -417,6 +410,7 @@ if __name__ == "__main__":
             results = json.load(f)
 
         animated = False
+        os.makedirs(os.path.join(output_dir, "animations"), exist_ok=True)
 
         for result in results:
             if "positions" in result:
@@ -428,7 +422,9 @@ if __name__ == "__main__":
                     result["parameters"]["Dt2"],
                     result["parameters"]["A"],
                     output_file=os.path.join(
-                        output_dir, f"animation_{result['k']}_{result['w']}.mp4"
+                        output_dir,
+                        "animations",
+                        f"animation_{result['k']}_{result['w']}.mp4",
                     ),
                 )
                 animated = True
