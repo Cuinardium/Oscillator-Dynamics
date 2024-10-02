@@ -92,8 +92,8 @@ def execute_simulations(
                 N,
                 w,
                 i,
-                params["dt"],
-                params["dt2"],
+                1 / (100 * w),
+                1 / (10 * w),
                 params["tf"],
                 f"{memory}m",
                 root_dir=simulation_dir,
@@ -220,7 +220,7 @@ def plot_results(results, output_dir="data/"):
     )
 
     # Try to do regression (raiz)
-    constants = np.linspace(0.098, 0.101, num=100)
+    constants = np.linspace(0.992, 0.994, num=100)
     cuadratic_errors = []
     for constant in constants:
         cuadratic_error = 0
@@ -333,42 +333,32 @@ if __name__ == "__main__":
 
     if sys.argv[1] == "generate":
         expected_resonances = [
-            1.0157894736842106,
-            4.4447368421052635,
-            6.290263157894737,
-            8.315263157894737,
-            9.929736842105264,
+            9.937,
+            44.451,
+            62.818,
+            83.066,
+            99.262,
         ]
         k_params = {
             100: {
-                "ws": utils.generate_frequencies(1, 100),
-                "dt": 0.0001,
-                "dt2": 0.01,
-                "tf": 50,
+                "ws": utils.generate_frequencies(9.937, 100),
+                "tf": 10,
             },
             2000: {
-                "ws": utils.generate_frequencies(4.45, 100),
-                "dt": 0.0001,
-                "dt2": 0.01,
-                "tf": 50,
+                "ws": utils.generate_frequencies(44.451, 100),
+                "tf": 10,
             },
             4000: {
-                "ws": utils.generate_frequencies(6.285, 100),
-                "dt": 0.0001,
-                "dt2": 0.01,
-                "tf": 50,
+                "ws": utils.generate_frequencies(62.818, 100),
+                "tf": 10,
             },
             7000: {
-                "ws": utils.generate_frequencies(8.31, 100),
-                "dt": 0.0001,
-                "dt2": 0.01,
-                "tf": 50,
+                "ws": utils.generate_frequencies(83.066, 100),
+                "tf": 10,
             },
             10000: {
-                "ws": utils.generate_frequencies(9.935, 100),
-                "dt": 0.0001,
-                "dt2": 0.01,
-                "tf": 50,
+                "ws": utils.generate_frequencies(99.262, 100),
+                "tf": 10,
             },
         }
 
@@ -384,13 +374,13 @@ if __name__ == "__main__":
             m=0.001,
             A=0.01,
             l0=0.001,
-            N=1000,
+            N=100,
             i="verlet",
             k_params=k_params,
             combinations_to_animate=combinations_to_animate,
             simulation_dir=os.path.join(output_dir, "simulations"),
-            memory=1792,
-            max_workers=8,
+            memory=1024,
+            max_workers=12,
         )
 
         print("Saving results")
