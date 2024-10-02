@@ -1,29 +1,21 @@
 import numpy as np
 
-def parse_dynamic_file(num_particles, path="dynamic.txt"):
-    time = []
-    positions = []
-
+def parse_dynamic_file(path="dynamic.txt"):
     with open(path, "r") as f:
-        lines = f.readlines()
+        num_particles, num_times = map(int, f.readline().strip().split())
 
-    i = 0
-    while i < len(lines):
-        t = float(lines[i].strip())
-        time.append(t)
-        i += 1
+    data = np.loadtxt(path, skiprows=1)
 
-        snapshot_positions = []
+    # Reshape the data: each time step includes 1 time value + num_particles positions
+    data = data.reshape((num_times, num_particles + 1))
 
-        for _ in range(num_particles):
-            pos = float(lines[i].strip())
-            snapshot_positions.append(pos)
-            i += 1
+    # First column is time, the rest are positions
+    time = data[:, 0]
+    positions = data[:, 1:]
+  
 
-        # Store the current snapshot's positions and velocities
-        positions.append(snapshot_positions)
+    return time, positions
 
-    return np.array(time), np.array(positions)
 
 def parse_static_file_dampened(path="static.txt"):
     with open(path, "r") as f:

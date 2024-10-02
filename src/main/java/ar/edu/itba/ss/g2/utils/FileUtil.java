@@ -76,6 +76,11 @@ public class FileUtil {
             int elapsed = 0;
             int printStep = snapshots.size() >= 10 ? snapshots.size() / 10 : 1;
 
+            int particleCount = snapshots.get(0).size();
+            int totalSnapshots = snapshots.size();
+
+            writer.write(particleCount + " " + totalSnapshots + "\n");
+
             for (int i = 0; i < snapshots.size(); i++) {
                 double t = (i + 1) * dt;
                 writer.write(formatter.format(t) + "\n");
