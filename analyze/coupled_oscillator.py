@@ -207,6 +207,7 @@ def plot_results(results, output_dir="data/"):
         top_3_peaks = sorted(peaks, key=lambda x: amplitudes[x], reverse=True)[:3]
         top_3_ws = [ws[i] for i in top_3_peaks]
         w0 = min(top_3_ws)
+        print(f"K={k} - Resonance at w={w0}")
 
         resonances.append((k, w0))
 
@@ -220,7 +221,7 @@ def plot_results(results, output_dir="data/"):
     )
 
     # Try to do regression (raiz)
-    constants = np.linspace(0.992, 0.994, num=100)
+    constants = np.linspace(0.993, 0.994, num=100)
     cuadratic_errors = []
     for constant in constants:
         cuadratic_error = 0
@@ -332,56 +333,43 @@ if __name__ == "__main__":
     output_dir = sys.argv[2] if len(sys.argv) == 3 else "data/"
 
     if sys.argv[1] == "generate":
-        expected_resonances = [
-            9.937,
-            44.451,
-            62.818,
-            83.066,
-            99.262,
+        m=0.001
+        N=100
+        A=0.01
+        l0=0.001
+        i="verlet"
+
+        frequencies = [
+            utils.generate_frequencies(k, m, N, 100) for k in [100, 2000, 4000, 7000, 10000]
         ]
+
         k_params = {
-            100: {
-                "ws": utils.generate_frequencies(9.937, 100),
-                "tf": 10,
-            },
-            2000: {
-                "ws": utils.generate_frequencies(44.451, 100),
-                "tf": 10,
-            },
-            4000: {
-                "ws": utils.generate_frequencies(62.818, 100),
-                "tf": 10,
-            },
-            7000: {
-                "ws": utils.generate_frequencies(83.066, 100),
-                "tf": 10,
-            },
-            10000: {
-                "ws": utils.generate_frequencies(99.262, 100),
-                "tf": 10,
-            },
+            100:   {"ws": frequencies[0][0], "tf": 25},
+            2000:  {"ws": frequencies[1][0], "tf": 25},
+            4000:  {"ws": frequencies[2][0], "tf": 25},
+            7000:  {"ws": frequencies[3][0], "tf": 25},
+            10000: {"ws": frequencies[4][0], "tf": 25},
         }
 
-        combinations_to_animate = []
-        for expected_resonance, k in zip(expected_resonances, k_params.keys()):
-            for harmonic in range(1, 4):
-                res_w = harmonic * expected_resonance
-                closest_w = min(k_params[k]["ws"], key=lambda w: abs(w - res_w))
-                if abs(closest_w - res_w) < 0.1:
-                    combinations_to_animate.append((k, closest_w))
+        harmonic_frequencies = frequencies[0][1]
+        combinations_to_animate = [
+            (100, min(k_params[100]["ws"], key=lambda w: abs(w - harmonic)))
+            for harmonic in harmonic_frequencies
+            if abs(min(k_params[100]["ws"], key=lambda w: abs(w - harmonic)) - harmonic) < 0.1
+        ]        
 
         results = execute_simulations(
-            m=0.001,
-            A=0.01,
-            l0=0.001,
-            N=100,
-            i="verlet",
-            k_params=k_params,
-            combinations_to_animate=combinations_to_animate,
-            simulation_dir=os.path.join(output_dir, "simulations"),
-            memory=1024,
-            max_workers=12,
-        )
+                m=0.001,
+                A=0.01,
+                l0=0.001,
+                N=100,
+                i="verlet",
+                k_params=k_params,
+                combinations_to_animate=combinations_to_animate,
+                simulation_dir=os.path.join(output_dir, "simulations"),
+                memory=1024,
+                max_workers=12,
+            )
 
         print("Saving results")
 

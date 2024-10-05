@@ -87,17 +87,22 @@ def calculate_amplitudes(positions):
 
 # Para generar frecuencias para graficar
 # mayor numero de frecuencias cerca de wo y sus armonicos
-def generate_frequencies(w0, num_points=1000):
+def generate_frequencies(k, m, N, num_points=1000):
+    harmonics = [
+        2 * (np.sqrt(k) / np.sqrt(m)) * np.sin((n * np.pi) / (2 * N)) for n in range(1, 4)
+    ]
+
+    w0 = harmonics[0]
     w_min = 0.5 * w0
     w_max = 3.5 * w0
     ws = np.linspace(w_min, w_max, num_points)
+    ws = np.concatenate((ws, harmonics))
     
     # Crear más puntos alrededor de w0, 2*w0, 3*w0
     fine_range = 0.02 * w0 if w0 > 10 else 0.2 * w0
-    harmonics = [w0, 2 * w0, 3 * w0]
     
     for harmonic in harmonics:
         fine_ws = np.linspace(harmonic - fine_range, harmonic + fine_range, num_points // 4)
         ws = np.concatenate((ws, fine_ws))
     
-    return np.unique(np.sort(ws))
+    return np.unique(np.sort(ws)), harmonics
