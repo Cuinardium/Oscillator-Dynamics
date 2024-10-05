@@ -12,12 +12,14 @@ def plot_positions_vs_time(
     plt.figure(figsize=(10, 6))
 
     line_styles = ["-", "--", "-.", ":"]
+    colors = ["blue", "orange", "green", "purple"]
 
     for i, time_steps, position, label in zip(
         range(len(times)), times, positions, labels
     ):
         line_style = line_styles[i % len(line_styles)]
-        plt.plot(time_steps, position, linestyle=line_style, label=label)
+        color = colors[i % len(colors)]
+        plt.plot(time_steps, position, linestyle=line_style, label=label, color=color)
 
     plt.xlim(
         min([min(time_steps) for time_steps in times]),
@@ -41,6 +43,51 @@ def plot_positions_vs_time(
     ax.legend(sorted_handles, sorted_labels)
 
     plt.savefig(file_name)
+
+    plt.close()
+
+    # Plot zoomed in version
+
+    plt.figure(figsize=(10, 6))
+
+    for i, time_steps, position, label in zip(
+        range(len(times)), times, positions, labels
+    ):
+        line_style = line_styles[i % len(line_styles)]
+        color = colors[i % len(colors)]
+        plt.plot(
+            time_steps,
+            position,
+            linestyle=line_style,
+            label=label,
+            color=color,
+        )
+
+    plt.xlim(
+        1.0405,
+        1.0406,
+    )
+
+    plt.ylim(
+        -0.516,
+        -0.505,
+    )
+
+
+
+    plt.xlabel("Tiempo (s)")
+    plt.ylabel("Posición (m)")
+
+    ax = plt.gca()
+
+    handles, labels = ax.get_legend_handles_labels()
+    custom_order = ["verlet", "beeman", "gear", "analitic"]
+    label_to_handle = dict(zip(labels, handles))
+    sorted_handles = [label_to_handle[label] for label in custom_order]
+    sorted_labels = custom_order
+    ax.legend(sorted_handles, sorted_labels)
+
+    plt.savefig(file_name.replace(".png", "_zoomed.png"))
 
     plt.close()
 
@@ -129,10 +176,17 @@ def plot_amplitudes_vs_time(
     plt.close()
 
 
-def plot_amplitudes_vs_w(ws, amplitudes, file_name="amplitudes_vs_w.png"):
+def plot_amplitudes_vs_w(ws, normal_frecuencies, amplitudes, file_name="amplitudes_vs_w.png"):
     plt.figure(figsize=(10, 6))
 
-    plt.plot(ws, amplitudes, marker="o", markersize=3, linestyle=":")
+    # Asimptotes at normal frecuencies
+    for w in normal_frecuencies:
+        plt.axvline(x=w, color="red", linestyle="--", linewidth=0.5)
+        w_index = ws.index(w)
+        ws.pop(w_index)
+        amplitudes.pop(w_index)
+
+    plt.plot(ws, amplitudes, marker="o", markersize=2, linestyle=":")
 
     plt.xlabel("w (rad/s)")
     plt.ylabel("Amplitud (m)")
