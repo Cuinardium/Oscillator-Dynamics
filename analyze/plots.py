@@ -176,23 +176,41 @@ def plot_amplitudes_vs_time(
     plt.close()
 
 
-def plot_amplitudes_vs_w(ws, normal_frecuencies, amplitudes, file_name="amplitudes_vs_w.png"):
+def plot_amplitudes_vs_w(ws, normal_frequencies, amplitudes, file_name="amplitudes_vs_w.png"):
     plt.figure(figsize=(10, 6))
 
-    # Asimptotes at normal frecuencies
-    for w in normal_frecuencies:
+    # Asymptotes at normal frequencies
+    for w in normal_frequencies:
         plt.axvline(x=w, color="red", linestyle="--", linewidth=0.5)
-        w_index = ws.index(w)
-        ws.pop(w_index)
-        amplitudes.pop(w_index)
 
-    plt.plot(ws, amplitudes, marker="o", markersize=2, linestyle=":")
+    # Split the ws and amplitudes into segments based on normal frequencies
+    segments = []
+    current_segment_ws = []
+    current_segment_amplitudes = []
+    
+    for w, amp in zip(ws, amplitudes):
+        if w in normal_frequencies:
+            # Store the current segment and reset for the next one
+            if current_segment_ws:
+                segments.append((current_segment_ws, current_segment_amplitudes))
+            current_segment_ws = []
+            current_segment_amplitudes = []
+        else:
+            current_segment_ws.append(w)
+            current_segment_amplitudes.append(amp)
+
+    # Append the last segment if any data remains
+    if current_segment_ws:
+        segments.append((current_segment_ws, current_segment_amplitudes))
+
+    # Plot each segment as a separate line
+    for segment_ws, segment_amplitudes in segments:
+        plt.plot(segment_ws, segment_amplitudes, marker="o", markersize=2, linestyle=":", color="C0")
 
     plt.xlabel("w (rad/s)")
     plt.ylabel("Amplitud (m)")
-
+    
     plt.savefig(file_name)
-
     plt.close()
 
 def plot_resonances_vs_k(

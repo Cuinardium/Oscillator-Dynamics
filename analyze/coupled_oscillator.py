@@ -196,12 +196,6 @@ def plot_results(results, output_dir="data/"):
             ws.append(w)
             amplitudes.append(amplitude)
 
-        plots.plot_amplitudes_vs_w(
-            ws,
-            amplitudes,
-            os.path.join(output_dir, "amplitudes_vs_w", f"amplitudes_vs_w_k-{k}.png"),
-        )
-
         peaks, _ = signal.find_peaks(amplitudes)
 
         top_3_peaks = sorted(peaks, key=lambda x: amplitudes[x], reverse=True)[:3]
@@ -210,6 +204,13 @@ def plot_results(results, output_dir="data/"):
         print(f"K={k} - Resonance at w={w0}")
 
         resonances.append((k, w0))
+
+        plots.plot_amplitudes_vs_w(
+            ws,
+            top_3_ws,
+            amplitudes,
+            os.path.join(output_dir, "amplitudes_vs_w", f"amplitudes_vs_w_k-{k}.png"),
+        )
 
     ks = [k for k, _ in sorted(resonances, key=lambda x: x[0])]
     ws = [w for _, w in sorted(resonances, key=lambda x: x[0])]
@@ -340,7 +341,7 @@ if __name__ == "__main__":
         i="verlet"
 
         frequencies = [
-            utils.generate_frequencies(k, m, N, 100) for k in [100, 2000, 4000, 7000, 10000]
+            utils.generate_frequencies(k, m, N, 150) for k in [100, 2000, 4000, 7000, 10000]
         ]
 
         k_params = {
