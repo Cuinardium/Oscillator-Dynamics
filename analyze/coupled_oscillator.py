@@ -171,20 +171,24 @@ def plot_results(results, output_dir="data/"):
         w = result["w"]
         k = result["k"]
 
+        text = f"k={k:.0f} kg/s$^2$\nw={w:.2f} rad/s"
+
         # Plot the amplitudes over time
         plots.plot_amplitudes_vs_time(
             result["time"],
             amplitudes,
+            text,
             os.path.join(
                 output_dir, "amplitudes_vs_time", f"amplitudes_vs_time_k-{k}_w-{w}.png"
             ),
         )
 
         if k not in max_amplitudes:
-            max_amplitudes[k] = []
+            theorical_resonance = utils.generate_frequencies(k, result["parameters"]["M"], result["parameters"]["N"], 1)[1]
+            max_amplitudes[k] = ([], theorical_resonance)
 
         if len(amplitudes) > 0:
-            max_amplitudes[k].append((w, max(amplitudes)))
+            max_amplitudes[k][0].append((w, max(amplitudes)))
 
     resonances = []
 
@@ -192,7 +196,7 @@ def plot_results(results, output_dir="data/"):
         ws = []
         amplitudes = []
 
-        for w, amplitude in sorted(data, key=lambda x: x[0]):
+        for w, amplitude in sorted(data[0], key=lambda x: x[0]):
             ws.append(w)
             amplitudes.append(amplitude)
 
@@ -201,14 +205,16 @@ def plot_results(results, output_dir="data/"):
         top_3_peaks = sorted(peaks, key=lambda x: amplitudes[x], reverse=True)[:3]
         top_3_ws = [ws[i] for i in top_3_peaks]
         w0 = min(top_3_ws)
-        print(f"K={k} - Resonance at w={w0}")
 
         resonances.append((k, w0))
 
+        text = f"k={k:.0f} kg/s$^2$"
+
         plots.plot_amplitudes_vs_w(
             ws,
-            top_3_ws,
+            data[1],
             amplitudes,
+            text,
             os.path.join(output_dir, "amplitudes_vs_w", f"amplitudes_vs_w_k-{k}.png"),
         )
 
@@ -222,7 +228,7 @@ def plot_results(results, output_dir="data/"):
     )
 
     # Try to do regression (raiz)
-    constants = np.linspace(0.993, 0.994, num=100)
+    constants = np.linspace(0.99, 1, num=100)
     cuadratic_errors = []
     for constant in constants:
         cuadratic_error = 0

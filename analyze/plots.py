@@ -155,7 +155,7 @@ def plot_mean_squared_error_vs_dt(
 
 
 def plot_amplitudes_vs_time(
-    times, amplitudes, file_name="amplitudes_vs_time.png"
+    times, amplitudes, text, file_name="amplitudes_vs_time.png"
 ):
     plt.figure(figsize=(10, 6))
 
@@ -171,37 +171,91 @@ def plot_amplitudes_vs_time(
     plt.xlabel("Tiempo (s)")
     plt.ylabel("Amplitud (m)")
 
+    # Shrinks the plot by 20%
+    ax = plt.gca()
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+    # Add text above the legend box (surronded by a box)
+    ax.text(
+        1.05,
+        0.8,
+        text,
+        transform=ax.transAxes,
+        fontsize=16,
+        verticalalignment="top",
+        bbox=dict(facecolor="none", edgecolor="grey", boxstyle="round,pad=0.1"),
+    )
+
     plt.savefig(file_name)
 
     plt.close()
 
 
-def plot_amplitudes_vs_w(ws, normal_frequencies, amplitudes, file_name="amplitudes_vs_w.png"):
+def plot_amplitudes_vs_w(ws, normal_frequencies, amplitudes, text, file_name="amplitudes_vs_w.png"):
+    plt.figure(figsize=(10, 6))
+
+    # Plot each segment as a separate line
+    plt.plot(ws, amplitudes, marker="o", markersize=2, linestyle=":", color="C0")
+
+    plt.xlabel("w (rad/s)")
+    plt.ylabel("Amplitud (m)")
+
+    # Shrinks the plot by 20%
+    ax = plt.gca()
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+    # Add text above the legend box (surronded by a box)
+    ax.text(
+        1.05,
+        0.8,
+        text,
+        transform=ax.transAxes,
+        fontsize=16,
+        verticalalignment="top",
+        bbox=dict(facecolor="none", edgecolor="grey", boxstyle="round,pad=0.1"),
+    )
+
+
+
+    plt.savefig(file_name)
+    plt.close()
+
     plt.figure(figsize=(10, 6))
 
     # Asymptotes at normal frequencies
-    for w in normal_frequencies:
-        plt.axvline(x=w, color="red", linestyle="--", linewidth=0.5)
+    # Remove if all ws are lesser than noprmal
+    normal_frequencies = [w for w in normal_frequencies if any(w < ws)]
+    for normal_freq in normal_frequencies:
+        plt.axvline(x=normal_freq, color="red", linestyle="--", linewidth=0.5)
 
     # Split the ws and amplitudes into segments based on normal frequencies
     segments = []
-    current_segment_ws = []
-    current_segment_amplitudes = []
-    
-    for w, amp in zip(ws, amplitudes):
-        if w in normal_frequencies:
-            # Store the current segment and reset for the next one
-            if current_segment_ws:
-                segments.append((current_segment_ws, current_segment_amplitudes))
-            current_segment_ws = []
-            current_segment_amplitudes = []
-        else:
-            current_segment_ws.append(w)
-            current_segment_amplitudes.append(amp)
 
-    # Append the last segment if any data remains
-    if current_segment_ws:
-        segments.append((current_segment_ws, current_segment_amplitudes))
+    # Previous does not work, cut condition should be w < normal_freq
+    for freq in normal_frequencies:
+        prev_ws = [
+            w for w in ws if w < freq
+        ]
+        prev_amps = [
+            amp for w, amp in zip(ws, amplitudes) if w < freq
+        ]
+
+        if prev_ws:
+            segments.append((prev_ws, prev_amps))
+
+        
+       # Append the last segment if any data remains
+    last_ws = [
+        w for w in ws if all(w >= freq for freq in normal_frequencies)
+    ]
+    last_amps = [
+        amp for w, amp in zip(ws, amplitudes) if all(w >= freq for freq in normal_frequencies)
+    ]
+
+    if last_ws:
+        segments.append((last_ws, last_amps))
 
     # Plot each segment as a separate line
     for segment_ws, segment_amplitudes in segments:
@@ -209,9 +263,29 @@ def plot_amplitudes_vs_w(ws, normal_frequencies, amplitudes, file_name="amplitud
 
     plt.xlabel("w (rad/s)")
     plt.ylabel("Amplitud (m)")
-    
-    plt.savefig(file_name)
+
+    # Shrinks the plot by 20%
+    ax = plt.gca()
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+    # Add text above the legend box (surronded by a box)
+    ax.text(
+        1.05,
+        0.8,
+        text,
+        transform=ax.transAxes,
+        fontsize=16,
+        verticalalignment="top",
+        bbox=dict(facecolor="none", edgecolor="grey", boxstyle="round,pad=0.1"),
+    )
+
+
+
+    plt.savefig(file_name.replace(".png", "_asimptote.png"))
     plt.close()
+
+    
 
 def plot_resonances_vs_k(
     ks, resonances, file_name="resonances_vs_k.png"
@@ -221,7 +295,7 @@ def plot_resonances_vs_k(
     plt.plot(ks, resonances, marker="o", markersize=5, linestyle="")
 
     plt.xlabel("k (N/m)")
-    plt.ylabel("Frecuencia de resonancia (rad/s)")
+    plt.ylabel("w$_0$ (rad/s)")
 
     plt.savefig(file_name)
 
@@ -242,7 +316,7 @@ def plot_resonance_with_best_constant_vs_k(
 
 
     plt.xlabel("k (N/m)")
-    plt.ylabel("Frecuencia de resonancia (rad/s)")
+    plt.ylabel("w$_0$ (rad/s)")
 
     plt.legend()
 
@@ -258,7 +332,7 @@ def plot_cuadratic_error_vs_constant(
     plt.plot(constants, errors, marker="o", markersize=3, linestyle=":")
 
     plt.xlabel("Constante")
-    plt.ylabel("Error cuadrático (m$^2$)")
+    plt.ylabel("Error (m$^2$)")
 
     plt.savefig(file_name)
 
