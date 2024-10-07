@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def parse_dynamic_file(path="dynamic.txt"):
     with open(path, "r") as f:
         num_particles, num_times = map(int, f.readline().strip().split())
@@ -12,7 +13,6 @@ def parse_dynamic_file(path="dynamic.txt"):
     # First column is time, the rest are positions
     time = data[:, 0]
     positions = data[:, 1:]
-  
 
     return time, positions
 
@@ -42,6 +42,7 @@ def parse_static_file_dampened(path="static.txt"):
         "Integrator": Integrator,
     }
 
+
 def parse_static_file_coupled(path="static.txt"):
     with open(path, "r") as f:
         lines = f.readlines()
@@ -68,7 +69,7 @@ def parse_static_file_coupled(path="static.txt"):
         "Dt": Dt,
         "Dt2": Dt2,
         "Tf": Tf,
-        "Integrator": integrator
+        "Integrator": integrator,
     }
 
 
@@ -82,27 +83,37 @@ def calculate_amplitudes(positions):
         # Calculate the amplitude for each particle in the snapshot
         particle_amplitudes = [abs(pos) for pos in snapshot]
         system_amplitudes.append(max(particle_amplitudes))
-    
+
     return system_amplitudes
+
 
 # Para generar frecuencias para graficar
 # mayor numero de frecuencias cerca de wo y sus armonicos
 def generate_frequencies(k, m, N, num_points=1000):
     harmonics = [
-        2 * (np.sqrt(k) / np.sqrt(m)) * np.sin((n * np.pi) / (2 * N)) for n in range(1, 4)
+        2 * (np.sqrt(k) / np.sqrt(m)) * np.sin((n * np.pi) / (2 * N))
+        for n in range(1, 4)
     ]
 
-    w0 = harmonics[0]
-    w_min = 0.5 * w0
-    w_max = 3.5 * w0
-    ws = np.linspace(w_min, w_max, num_points)
-    ws = np.concatenate((ws, harmonics))
-    
-    # Crear más puntos alrededor de w0, 2*w0, 3*w0
-    fine_range = 0.02 * w0 if w0 > 10 else 0.2 * w0
-    
+    # Definir proporciones de puntos: 1/5 para cada armónico, 2/5 para el resto del rango
+    points_per_harmonic = num_points // 5
+    remaining_points = num_points - 3 * points_per_harmonic
+
+    frequencies = []
+
+    # Generar puntos alrededor de cada armónico (espejado desde el armónico)
     for harmonic in harmonics:
-        fine_ws = np.linspace(harmonic - fine_range, harmonic + fine_range, num_points // 4)
-        ws = np.concatenate((ws, fine_ws))
-    
-    return np.unique(np.sort(ws)), harmonics
+        delta = 0.05 * harmonic if k < 100 else 0.01 * harmonic
+        freqs_near_harmonic = np.linspace(
+            harmonic - delta, harmonic + delta, points_per_harmonic
+        )
+        frequencies.extend(freqs_near_harmonic)
+
+    # Generar los puntos restantes entre 0.5 y 3.5 veces el primer armónico
+    min_freq = 0.5 * harmonics[0]
+    max_freq = 3.5 * harmonics[0]
+    remaining_freqs = np.linspace(min_freq, max_freq, remaining_points)
+    frequencies.extend(remaining_freqs)
+    frequencies.extend(harmonics)
+
+    return np.sort(np.unique(np.array(frequencies))), harmonics

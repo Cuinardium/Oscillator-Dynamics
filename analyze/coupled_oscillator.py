@@ -90,16 +90,16 @@ def execute_simulations(
                 A,
                 l0,
                 N,
-                w,
+                param["w"],
                 i,
-                1 / (100 * w),
-                1 / (10 * w),
-                params["tf"],
+                param["dt"],
+                param["dt2"],
+                param["tf"],
                 f"{memory}m",
                 root_dir=simulation_dir,
             )
             for k, params in k_params.items()
-            for w in params["ws"]
+            for param in params
         ]
 
         jobs = len(futures)
@@ -325,39 +325,63 @@ def animate(positions, l0, omega, dt, A, output_file="data/animation.mp4"):
 if __name__ == "__main__":
 
     # First and only argument is directory
-    if len(sys.argv) != 2 and len(sys.argv) != 3:
+    if len(sys.argv) != 2 and len(sys.argv) != 3 and len(sys.argv) != 4:
         print(
-            "Usage: python dampened_oscillator.py <generate|plot|animate> [directory]"
+            "Usage: python dampened_oscillator.py <generate|plot|animate> [directory] [ideal_ws]"
         )
         sys.exit(1)
 
     output_dir = sys.argv[2] if len(sys.argv) == 3 else "data/"
+    ideal_ws = len(sys.argv) == 4 and sys.argv[3] == "ideal_ws"
 
     if sys.argv[1] == "generate":
-        m=0.001
-        N=100
-        A=0.01
-        l0=0.001
-        i="verlet"
+        m = 0.001
+        N = 100
+        A = 0.01
+        l0 = 0.001
+        i = "verlet"
 
-        frequencies = [
-            utils.generate_frequencies(k, m, N, 150) for k in [100, 2000, 4000, 7000, 10000]
+        def generate_params(ws, resonances):
+            return [
+                {
+                    "w": w,
+                    "dt": 1 / (100 * w),
+                    "dt2": 1 / (10 * w),
+                    "tf": (
+                        10
+                        if all(abs(w - resonance) > 1 for resonance in resonances)
+                        else 100
+                    ),
+                }
+                for w in ws
+            ]
+
+        k_values = [100, 2000, 4000, 7000, 10000]
+        ws = [
+            utils.generate_frequencies(k, m, N, 80)
+            for k in [100, 2000, 4000, 7000, 10000]
         ]
+        resonances = [ws[i][1] for i in range(len(k_values))]
+
+        if not ideal_ws:
+            w_ranges = [(5, 15), (40, 50), (55, 70), (75, 90), (90, 110)]
+            ws = [np.linspace(w_range[0], w_range[1], num=50) for w_range in w_ranges]
 
         k_params = {
-            100:   {"ws": frequencies[0][0], "tf": 25},
-            2000:  {"ws": frequencies[1][0], "tf": 25},
-            4000:  {"ws": frequencies[2][0], "tf": 25},
-            7000:  {"ws": frequencies[3][0], "tf": 25},
-            10000: {"ws": frequencies[4][0], "tf": 25},
+            k: generate_params(ws, resonance)
+            for k, ws, resonance in zip(k_values, ws, resonances)
         }
 
-        harmonic_frequencies = frequencies[0][1]
+        frequencies_to_animate = resonances[0]
         combinations_to_animate = [
-            (100, min(k_params[100]["ws"], key=lambda w: abs(w - harmonic)))
-            for harmonic in harmonic_frequencies
-            if abs(min(k_params[100]["ws"], key=lambda w: abs(w - harmonic)) - harmonic) < 0.1
-        ]        
+            (100, min(k_params[100], key=lambda param: abs(param["w"] - frequency)))
+            for frequency in frequencies_to_animate
+            if abs(
+                min(k_params[100], key=lambda param: abs(param["w"] - frequency))["w"]
+                - frequency
+            )
+            < 0.1
+        ]
 
         results = execute_simulations(
                 m=0.001,
@@ -413,5 +437,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
     else:
-        print("Usage: python dampened_oscillator.py <generate|plot>")
+        print(
+            "Usage: python dampened_oscillator.py <generate|plot> [directory] [ideal_ws]"
+        )
         sys.exit(1)
