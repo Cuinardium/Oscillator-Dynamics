@@ -280,6 +280,9 @@ def animate(positions, l0, omega, dt, A, output_file="data/animation.mp4"):
     ax.set_ylim(
         min_y - extra, max_y + extra
     )  # Dynamic y-limits based on particle movement
+        
+    ax.set_xticks([])
+    ax.set_yticks([])
 
     # Initialize the scatter plot for particles
     (particles,) = ax.plot([], [], "bo", ms=1)  # 'bo' means blue circles
@@ -310,7 +313,7 @@ def animate(positions, l0, omega, dt, A, output_file="data/animation.mp4"):
         )  # Rightmost particle to wall
 
         # Update the forced particle
-        t = frame * dt
+        t = (frame + 1) * dt
         forced_particle.set_data([-l0], [A * np.sin(omega * t)])
 
         return particles, particle_lines, wall_line, forced_particle
