@@ -337,7 +337,7 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
-    output_dir = sys.argv[2] if len(sys.argv) == 3 else "data/"
+    output_dir = sys.argv[2] if len(sys.argv) == 3 or len(sys.argv) == 4 else "data/"
     ideal_ws = len(sys.argv) == 4 and sys.argv[3] == "ideal_ws"
 
     if sys.argv[1] == "generate":
@@ -363,11 +363,12 @@ if __name__ == "__main__":
             ]
 
         k_values = [100, 2000, 4000, 7000, 10000]
-        ws = [
-            utils.generate_frequencies(k, m, N, 80)
+        frecuencies_resonances = [
+            utils.generate_frequencies(k, m, N, 50)
             for k in [100, 2000, 4000, 7000, 10000]
         ]
-        resonances = [ws[i][1] for i in range(len(k_values))]
+        resonances = [frecuencies_resonances[i][1] for i in range(len(k_values))]
+        ws = [frecuencies_resonances[i][0] for i in range(len(k_values))]
 
         if not ideal_ws:
             w_ranges = [(5, 15), (40, 50), (55, 70), (75, 90), (90, 110)]
@@ -377,17 +378,28 @@ if __name__ == "__main__":
             k: generate_params(ws, resonance)
             for k, ws, resonance in zip(k_values, ws, resonances)
         }
-
-        frequencies_to_animate = resonances[0]
+         
         combinations_to_animate = [
-            (100, min(k_params[100], key=lambda param: abs(param["w"] - frequency)))
-            for frequency in frequencies_to_animate
-            if abs(
-                min(k_params[100], key=lambda param: abs(param["w"] - frequency))["w"]
-                - frequency
-            )
-            < 0.1
+            (100, 10),
+            (100, 15),
         ]
+
+        for k, w in combinations_to_animate:
+            if k not in k_params:
+                k_params[k] = generate_params([w], [w])
+            elif w not in [param["w"] for param in k_params[k]]:
+                k_params[k].append(
+                    {
+                        "w": w,
+                        "dt": 1 / (100 * w),
+                        "dt2": 1 / (10 * w),
+                        "tf": 100,
+                    }
+                )
+            else:
+                for param in k_params[k]:
+                    if param["w"] == w:
+                        param["tf"] = 100
 
         results = execute_simulations(
                 m=0.001,
@@ -398,8 +410,8 @@ if __name__ == "__main__":
                 k_params=k_params,
                 combinations_to_animate=combinations_to_animate,
                 simulation_dir=os.path.join(output_dir, "simulations"),
-                memory=1024,
-                max_workers=12,
+                memory=1524,
+                max_workers=8,
             )
 
         print("Saving results")
