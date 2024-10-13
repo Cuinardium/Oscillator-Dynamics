@@ -73,8 +73,6 @@ def plot_positions_vs_time(
         -0.505,
     )
 
-
-
     plt.xlabel("Tiempo (s)")
     plt.ylabel("Posición (m)")
 
@@ -133,7 +131,14 @@ def plot_mean_squared_error_vs_dt(
         # Sort by dt
         errors = sorted(errors, key=lambda x: x[0])
         dts, mean_squared_error = zip(*errors)
-        plt.plot(dts, mean_squared_error, label=integrator, marker="o", markersize=3, linestyle=":")
+        plt.plot(
+            dts,
+            mean_squared_error,
+            label=integrator,
+            marker="o",
+            markersize=3,
+            linestyle=":",
+        )
 
     plt.xlabel("dt (s)")
     plt.ylabel("Error cuadrático medio (m$^2$)")
@@ -192,7 +197,9 @@ def plot_amplitudes_vs_time(
     plt.close()
 
 
-def plot_amplitudes_vs_w(ws, normal_frequencies, amplitudes, text, file_name="amplitudes_vs_w.png"):
+def plot_amplitudes_vs_w(
+    ws, normal_frequencies, amplitudes, text, file_name="amplitudes_vs_w.png"
+):
     plt.figure(figsize=(10, 6))
 
     # Plot each segment as a separate line
@@ -217,8 +224,6 @@ def plot_amplitudes_vs_w(ws, normal_frequencies, amplitudes, text, file_name="am
         bbox=dict(facecolor="none", edgecolor="grey", boxstyle="round,pad=0.1"),
     )
 
-
-
     plt.savefig(file_name)
     plt.close()
 
@@ -235,23 +240,18 @@ def plot_amplitudes_vs_w(ws, normal_frequencies, amplitudes, text, file_name="am
 
     # Previous does not work, cut condition should be w < normal_freq
     for freq in normal_frequencies:
-        prev_ws = [
-            w for w in ws if w < freq
-        ]
-        prev_amps = [
-            amp for w, amp in zip(ws, amplitudes) if w < freq
-        ]
+        prev_ws = [w for w in ws if w < freq]
+        prev_amps = [amp for w, amp in zip(ws, amplitudes) if w < freq]
 
         if prev_ws:
             segments.append((prev_ws, prev_amps))
 
-        
-       # Append the last segment if any data remains
-    last_ws = [
-        w for w in ws if all(w >= freq for freq in normal_frequencies)
-    ]
+    # Append the last segment if any data remains
+    last_ws = [w for w in ws if all(w >= freq for freq in normal_frequencies)]
     last_amps = [
-        amp for w, amp in zip(ws, amplitudes) if all(w >= freq for freq in normal_frequencies)
+        amp
+        for w, amp in zip(ws, amplitudes)
+        if all(w >= freq for freq in normal_frequencies)
     ]
 
     if last_ws:
@@ -259,7 +259,14 @@ def plot_amplitudes_vs_w(ws, normal_frequencies, amplitudes, text, file_name="am
 
     # Plot each segment as a separate line
     for segment_ws, segment_amplitudes in segments:
-        plt.plot(segment_ws, segment_amplitudes, marker="o", markersize=2, linestyle=":", color="C0")
+        plt.plot(
+            segment_ws,
+            segment_amplitudes,
+            marker="o",
+            markersize=2,
+            linestyle=":",
+            color="C0",
+        )
 
     plt.xlabel("w (rad/s)")
     plt.ylabel("Amplitud (m)")
@@ -280,42 +287,50 @@ def plot_amplitudes_vs_w(ws, normal_frequencies, amplitudes, text, file_name="am
         bbox=dict(facecolor="none", edgecolor="grey", boxstyle="round,pad=0.1"),
     )
 
-
-
     plt.savefig(file_name.replace(".png", "_asimptote.png"))
     plt.close()
 
-    
 
-def plot_resonances_vs_k(
-    ks, resonances, file_name="resonances_vs_k.png"
-):
+def plot_resonances_vs_k(ks, resonances, file_name="resonances_vs_k.png"):
     plt.figure(figsize=(10, 6))
 
     plt.plot(ks, resonances, marker="o", markersize=5, linestyle="")
 
-    plt.xlabel("k (N/m)")
+    plt.xlabel("k (Kg/s$^2$)")
     plt.ylabel("w$_0$ (rad/s)")
 
     plt.savefig(file_name)
 
     plt.close()
 
+
 def plot_resonance_with_best_constant_vs_k(
     ks, resonances, best_constant, file_name="resonances_with_best_constant_vs_k.png"
 ):
     plt.figure(figsize=(10, 6))
 
-    plt.plot(ks, resonances, marker="o", markersize=5, linestyle="", label="Frecuencia de resonancia")
+    plt.plot(
+        ks,
+        resonances,
+        marker="o",
+        markersize=5,
+        linestyle="",
+        label="Frecuencia de resonancia",
+    )
 
     # Curve is best_constant * k^1/2
     ks = np.linspace(0, max(ks), 100)
     resonances = best_constant * np.sqrt(ks)
     best_constant = "{:.4f}".format(best_constant)
-    plt.plot(ks, resonances, linestyle="-", color="r", label=f"{best_constant} * k$^1/2$")
+    plt.plot(
+        ks,
+        resonances,
+        linestyle="-",
+        color="r",
+        label="Ajuste, C = " + best_constant + " (1/Kg$^{1/2}$)",
+    )
 
-
-    plt.xlabel("k (N/m)")
+    plt.xlabel("k (Kg/s$^2$)")
     plt.ylabel("w$_0$ (rad/s)")
 
     plt.legend()
@@ -324,6 +339,7 @@ def plot_resonance_with_best_constant_vs_k(
 
     plt.close()
 
+
 def plot_cuadratic_error_vs_constant(
     constants, errors, file_name="cuadratic_error_vs_constant.png"
 ):
@@ -331,10 +347,21 @@ def plot_cuadratic_error_vs_constant(
 
     plt.plot(constants, errors, marker="o", markersize=3, linestyle=":")
 
-    plt.xlabel("Constante")
-    plt.ylabel("Error (m$^2$)")
+    plt.ylabel("Error (rad$^2/s^2$)")
+    plt.xlabel("C (1/Kg$^{1/2}$)")
+
+    best_constant = constants[np.argmin(errors)]
+
+    plt.axvline(
+        x=best_constant,
+        color="red",
+        linestyle="--",
+        linewidth=1,
+        label="Mejor C = " + "{:.4f}".format(best_constant) + " (1/Kg$^{1/2}$)",
+    )
+
+    plt.legend()
 
     plt.savefig(file_name)
 
     plt.close()
-
