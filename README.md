@@ -1,6 +1,8 @@
 # Oscillator Dynamics
 This project simulates the behavior of oscillating systems using numerical integration techniques. It includes both a dampened oscillator and a coupled oscillator system, where the oscillators are modeled as particles connected by springs. This project also provides tools for analyzing the simulation results, including generating plots and animations of the oscillators movements.
 
+![animation](./docs/animation.gif)
+
 ## Requirements
 
 - `Java 17` (Simulation)
